@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>11: Low-Dose CT &amp; Regularization · Tigre.jl</title><meta name="title" content="11: Low-Dose CT &amp; Regularization · Tigre.jl"/><meta property="og:title" content="11: Low-Dose CT &amp; Regularization · Tigre.jl"/><meta property="twitter:title" content="11: Low-Dose CT &amp; Regularization · Tigre.jl"/><meta name="description" content="Documentation for Tigre.jl."/><meta property="og:description" content="Documentation for Tigre.jl."/><meta property="twitter:description" content="Documentation for Tigre.jl."/><meta property="og:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/11_low_dose_regularization/"/><meta property="twitter:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/11_low_dose_regularization/"/><link rel="canonical" href="https://hashimoto-koh.github.io/Tigre.jl/demos/11_low_dose_regularization/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Tigre.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../about_tigre/">About TIGRE &amp; Upstream</a></li><li><a class="tocitem" href="../../quickstart/">Quick Start</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li><li><a class="tocitem" href="../../geometry/">Geometry Specification</a></li><li><a class="tocitem" href="../../operators/">Operators &amp; Weights</a></li><li><a class="tocitem" href="../../algorithms/">Algorithms</a></li><li><a class="tocitem" href="../../workspace_reuse/">Workspace &amp; Plan Reuse</a></li><li><a class="tocitem" href="../../phantoms/">Phantoms</a></li><li><span class="tocitem">Demonstrations</span><ul><li><a class="tocitem" href="../01_2D_parallel_beam/">01: 2D Parallel-Beam</a></li><li><a class="tocitem" href="../02_2D_cone_beam/">02: 2D Cone-Beam (Fan-Beam)</a></li><li><a class="tocitem" href="../03_3D_parallel_beam/">03: 3D Parallel-Beam</a></li><li><a class="tocitem" href="../04_3D_cone_beam/">04: 3D Cone-Beam (CBCT)</a></li><li><a class="tocitem" href="../05_iterative_comparison/">05: Iterative Algorithms Comparison</a></li><li><a class="tocitem" href="../06_krylov_solvers/">06: Krylov Subspace Solvers</a></li><li><a class="tocitem" href="../07_preprocessing/">07: Projection Preprocessing &amp; COR</a></li><li><a class="tocitem" href="../08_offset_detector_fov/">08: Offset Detector &amp; Extended FOV</a></li><li><a class="tocitem" href="../09_laminography_conebeam/">09: Computed Laminography (CBCL)</a></li><li><a class="tocitem" href="../10_emission_mlem_osem/">10: Emission Tomography (PET/SPECT)</a></li><li class="is-active"><a class="tocitem" href>11: Low-Dose CT &amp; Regularization</a><ul class="internal"><li><a class="tocitem" href="#Prerequisites"><span>Prerequisites</span></a></li><li><a class="tocitem" href="#1.-Geometry-Setup-and-Ground-Truth-Phantom"><span>1. Geometry Setup &amp; Ground Truth Phantom</span></a></li><li><a class="tocitem" href="#2.-Ultra-Low-Dose-CT-Noise-Simulation-(add_ct_noise)"><span>2. Ultra-Low-Dose CT Noise Simulation (<code>add_ct_noise</code>)</span></a></li><li><a class="tocitem" href="#3.-Algorithm-Execution"><span>3. Algorithm Execution</span></a></li><li><a class="tocitem" href="#4.-Quantitative-Image-Quality-Assessment-(measure_quality)"><span>4. Quantitative Image Quality Assessment (<code>measure_quality</code>)</span></a></li><li><a class="tocitem" href="#5.-Visual-Comparison-and-Profile-Analysis"><span>5. Visual Comparison &amp; Profile Analysis</span></a></li><li><a class="tocitem" href="#6.-Summary-and-Recommendations"><span>6. Summary &amp; Recommendations</span></a></li></ul></li><li><a class="tocitem" href="../12_sparse_view_cs/">12: Sparse-View CT &amp; Compressed Sensing</a></li><li><a class="tocitem" href="../13_workspace_reuse/">13: Workspace &amp; Plan Reuse</a></li></ul></li><li><a class="tocitem" href="../../visualization/">Visualization</a></li><li><a class="tocitem" href="../../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Demonstrations</a></li><li class="is-active"><a href>11: Low-Dose CT &amp; Regularization</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>11: Low-Dose CT &amp; Regularization</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl/blob/master/docs/src/demos/11_low_dose_regularization.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Low-Dose-CT-and-Advanced-Regularization-Benchmark-with-Tigre.jl"><a class="docs-heading-anchor" href="#Low-Dose-CT-and-Advanced-Regularization-Benchmark-with-Tigre.jl">Low-Dose CT &amp; Advanced Regularization Benchmark with Tigre.jl</a><a id="Low-Dose-CT-and-Advanced-Regularization-Benchmark-with-Tigre.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Low-Dose-CT-and-Advanced-Regularization-Benchmark-with-Tigre.jl" title="Permalink"></a></h1><p>In clinical and industrial CT, reducing radiation dose is essential to minimize patient exposure and thermal tube wear. However, extreme dose reduction drastically degrades signal-to-noise ratio (SNR), introducing severe quantum mottle and Poisson streak artifacts.</p><p>This tutorial benchmark investigates how <strong>Tigre.jl</strong>&#39;s advanced Julia-native regularization algorithms restore image quality from ultra-low-dose projection data:</p><ul><li><strong>FDK (Hann)</strong>: Classical analytical baseline (heavily degraded by high-frequency noise).</li><li><strong>SART</strong>: Simultaneous Algebraic Reconstruction Technique.</li><li><strong>SART-TV</strong>: SART with steepest descent Total Variation (TV) minimization.</li><li><strong>FISTA (TV)</strong>: Fast Iterative Shrinkage-Thresholding Algorithm with automatic step size (<code>hyper = :auto</code>).</li><li><strong>AW-ASD-POCS</strong>: Adaptive-Weighted ASD-POCS preserving sharp anatomical interfaces.</li><li><strong>IRN-TV-CGLS</strong>: Iteratively Reweighted Norm TV with conjugate gradient least squares.</li></ul><hr/><h3 id="Key-Tigre.jl-Features-Demonstrated"><a class="docs-heading-anchor" href="#Key-Tigre.jl-Features-Demonstrated">Key Tigre.jl Features Demonstrated</a><a id="Key-Tigre.jl-Features-Demonstrated-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Tigre.jl-Features-Demonstrated" title="Permalink"></a></h3><ul><li><code>add_ct_noise</code>: Realistic Beer-Lambert Poisson quantum + Gaussian electronic noise simulation.</li><li><code>fista</code> with <code>hyper = :auto</code>: Automated operator norm estimation via SVD power method.</li><li><code>sart_tv</code>, <code>awasd_pocs</code>, <code>irn_tv_cgls</code>: State-of-the-art edge-preserving TV solvers.</li><li><code>crop_cbct!</code>: In-place cylindrical Field-of-View (FOV) masking.</li><li><code>measure_quality</code>: Multi-metric quantitative benchmarking (PSNR, SSIM, RMSE, NCC).</li></ul><h2 id="Prerequisites"><a class="docs-heading-anchor" href="#Prerequisites">Prerequisites</a><a id="Prerequisites-1"></a><a class="docs-heading-anchor-permalink" href="#Prerequisites" title="Permalink"></a></h2><p>This tutorial uses <strong>Makie</strong> (recommended backend: <strong>CairoMakie</strong>) for visualization. If <code>CairoMakie</code> is not installed in your environment, add it by running <code>using Pkg; Pkg.add(&quot;CairoMakie&quot;)</code>.</p><pre><code class="language-julia hljs">using LinearAlgebra
+using Printf
+using Random
+using CairoMakie
+using Tigre</code></pre><h2 id="1.-Geometry-Setup-and-Ground-Truth-Phantom"><a class="docs-heading-anchor" href="#1.-Geometry-Setup-and-Ground-Truth-Phantom">1. Geometry Setup &amp; Ground Truth Phantom</a><a id="1.-Geometry-Setup-and-Ground-Truth-Phantom-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Geometry-Setup-and-Ground-Truth-Phantom" title="Permalink"></a></h2><p>We configure a 3D cone-beam geometry with 180 projection angles and synthesize an analytical Shepp-Logan volume.</p><pre><code class="language-julia hljs">nangles = 180
+angles = LinRange(0f0, 2f0 * Float32(pi), nangles + 1)[1:end-1] |&gt; collect
+
+geo = Geometry(
+    mode = :cone,
+    angles = angles,
+    nVoxel = (256, 256, 256),
+    sVoxel = (256f0, 256f0, 256f0),
+    nDetector = (320, 320),
+    sDetector = (480f0, 480f0),
+    DSO = 1000f0,
+    DSD = 1500f0,
+)
+
+phantom = shepp_logan_3d(volume_size(geo))
+clean_projections = Ax(phantom, geo)
+
+println(&quot;Volume shape:      &quot;, size(phantom))
+println(&quot;Projections shape: &quot;, size(clean_projections))
+</code></pre><pre><code class="language-text hljs">Volume shape:      (256, 256, 256)
+Projections shape: (320, 320, 180)</code></pre><h2 id="2.-Ultra-Low-Dose-CT-Noise-Simulation-(add_ct_noise)"><a class="docs-heading-anchor" href="#2.-Ultra-Low-Dose-CT-Noise-Simulation-(add_ct_noise)">2. Ultra-Low-Dose CT Noise Simulation (<code>add_ct_noise</code>)</a><a id="2.-Ultra-Low-Dose-CT-Noise-Simulation-(add_ct_noise)-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Ultra-Low-Dose-CT-Noise-Simulation-(add_ct_noise)" title="Permalink"></a></h2><p>We simulate extreme low-dose acquisition by reducing the incident photon count to <span>$I_0 = 3,000$</span> (compared to standard clinical dose <span>$I_0 \ge 100,000$</span>). Transmission follows the Beer-Lambert law with Poisson quantum fluctuation and detector electronic readout noise.</p><pre><code class="language-julia hljs">rng = Random.MersenneTwister(1234)
+low_dose_projections = add_ct_noise(
+    clean_projections;
+    I0 = 3000.0,              # Ultra-low incident photon count
+    gaussian = (0f0, 0.5f0),   # Detector readout noise
+    poisson = true,
+    rng = rng,
+)
+
+mid_v = size(clean_projections, 2) ÷ 2
+fig = Figure(size = (800, 340))
+ax1 = Axis(fig[1, 1], title = &quot;Clean Sinogram&quot;)
+hm1 = heatmap!(ax1, clean_projections[:, mid_v, :]&#39;, colormap = :viridis)
+Colorbar(fig[1, 2], hm1)
+
+ax2 = Axis(fig[1, 3], title = &quot;Ultra-Low-Dose Sinogram (I0=3000)&quot;)
+hm2 = heatmap!(ax2, low_dose_projections[:, mid_v, :]&#39;, colormap = :viridis)
+Colorbar(fig[1, 4], hm2)
+fig</code></pre><p><img src="../../assets/tutorials/11_low_dose_regularization_01.png" alt/></p><h2 id="3.-Algorithm-Execution"><a class="docs-heading-anchor" href="#3.-Algorithm-Execution">3. Algorithm Execution</a><a id="3.-Algorithm-Execution-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Algorithm-Execution" title="Permalink"></a></h2><p>We reconstruct the noisy sinogram using six distinct reconstruction paradigms:</p><ol><li><strong>FDK</strong>: Filtered backprojection with Hann apodization window.</li><li><strong>SART</strong>: Simultaneous Algebraic Reconstruction Technique (10 iterations).</li><li><strong>SART-TV</strong>: SART combined with 10 inner TV steepest descent sub-iterations per cycle.</li><li><strong>FISTA</strong>: Fast Iterative Shrinkage-Thresholding Algorithm using <code>hyper = :auto</code> for automatic Lipschitz constant calculation.</li><li><strong>AW-ASD-POCS</strong>: Adaptive-Weighted ASD-POCS dynamically weighting TV penalties along local gradient directions.</li><li><strong>IRN-TV-CGLS</strong>: Iteratively Reweighted Norm TV solved via inner CGLS iterations.</li></ol><pre><code class="language-julia hljs"># =============================================================================
+# Estimation of FISTA Lipschitz Hyperparameter (`hyper`)
+#
+# FISTA (Fast Iterative Shrinkage-Thresholding Algorithm) relies on proximal gradient descent.
+# Its gradient step size is proportional to 1 / hyper, where hyper represents the Lipschitz
+# constant L ≈ ||Aᵀ A||₂ (the spectral radius of the forward-backward projection operator).
+#
+# If `hyper` is left to the default fallback value, the gradient step size can be drastically
+# mismatched (e.g. orders of magnitude too conservative), leading to poor reconstruction quality
+# and near-zero convergence.
+#
+# We explicitly estimate `fista_hyper` beforehand using the SVD power method via `estimate_hyper(geo)`.
+# Storing it in an explicit variable before calling `fista` makes the parameter calibration step
+# transparent and easily verifiable, emphasizing the critical importance of proper operator norm scaling.
+# =============================================================================
+fista_hyper = estimate_hyper(geo)
+println(&quot;Estimated FISTA Lipschitz hyperparameter: &quot;, fista_hyper)
+</code></pre><pre><code class="language-text hljs">Estimated FISTA Lipschitz hyperparameter: 94260.766</code></pre><pre><code class="language-julia hljs">println(&quot;--&gt; 1/6 Computing FDK (Hann)...&quot;)
+rec_fdk = fdk(low_dose_projections, geo; filter = :hann)
+
+println(&quot;--&gt; 2/6 Computing SART (10 iter)...&quot;)
+rec_sart = sart(low_dose_projections, geo, 8; lambda = 0.8f0)
+
+println(&quot;--&gt; 3/6 Computing SART-TV (10 iter, tviter=10)...&quot;)
+rec_sart_tv = sart_tv(low_dose_projections, geo, 8; lambda = 0.8f0, tviter = 8)
+
+println(&quot;--&gt; 4/6 Computing FISTA (40 iter, hyper=fista_hyper)...&quot;)
+rec_fista = fista(low_dose_projections, geo, 40; hyper = fista_hyper, tviter = 8)
+
+println(&quot;--&gt; 5/6 Computing AW-ASD-POCS (10 iter)...&quot;)
+rec_awasd = awasd_pocs(low_dose_projections, geo, 8; tviter = 8, alpha = 0.002f0)
+
+println(&quot;--&gt; 6/6 Computing IRN-TV-CGLS (5 inner, 3 outer)...&quot;)
+rec_irn = irn_tv_cgls(low_dose_projections, geo, 4; niter_outer = 2, lambda = 0.1f0)
+
+# Apply in-place FOV cropping to all volumes to remove boundary noise
+for vol in (rec_fdk, rec_sart, rec_sart_tv, rec_fista, rec_awasd, rec_irn)
+    crop_cbct!(vol, geo)
+end
+println(&quot;Reconstruction complete.&quot;)
+</code></pre><pre><code class="language-text hljs">--&gt; 1/6 Computing FDK (Hann)...
+--&gt; 2/6 Computing SART (10 iter)...
+--&gt; 3/6 Computing SART-TV (10 iter, tviter=10)...
+--&gt; 4/6 Computing FISTA (40 iter, hyper=fista_hyper)...
+--&gt; 5/6 Computing AW-ASD-POCS (10 iter)...
+--&gt; 6/6 Computing IRN-TV-CGLS (5 inner, 3 outer)...
+Reconstruction complete.</code></pre><h2 id="4.-Quantitative-Image-Quality-Assessment-(measure_quality)"><a class="docs-heading-anchor" href="#4.-Quantitative-Image-Quality-Assessment-(measure_quality)">4. Quantitative Image Quality Assessment (<code>measure_quality</code>)</a><a id="4.-Quantitative-Image-Quality-Assessment-(measure_quality)-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Quantitative-Image-Quality-Assessment-(measure_quality)" title="Permalink"></a></h2><p>We evaluate reconstructed volumes against the analytical ground truth phantom across standard metrics: PSNR (higher is better), SSIM (higher is better, max 1.0), and RMSE (lower is better).</p><pre><code class="language-julia hljs">algs = [&quot;FDK (Hann)&quot;, &quot;SART&quot;, &quot;SART-TV&quot;, &quot;FISTA (TV)&quot;, &quot;AW-ASD-POCS&quot;, &quot;IRN-TV-CGLS&quot;]
+vols = [rec_fdk, rec_sart, rec_sart_tv, rec_fista, rec_awasd, rec_irn]
+
+metrics = [measure_quality(phantom, v) for v in vols]
+
+println(&quot;=&quot; ^ 68)
+@printf(&quot;%-15s | %10s | %10s | %10s | %10s\n&quot;, &quot;Algorithm&quot;, &quot;PSNR (dB)&quot;, &quot;SSIM&quot;, &quot;RMSE&quot;, &quot;NCC&quot;)
+println(&quot;-&quot; ^ 68)
+for (name, q) in zip(algs, metrics)
+    @printf(&quot;%-15s | %10.2f | %10.4f | %10.4f | %10.4f\n&quot;, name, q.psnr, q.ssim, q.rmse, q.ncc)
+end
+println(&quot;=&quot; ^ 68)
+
+# Bar chart comparison
+fig = Figure(size = (850, 380))
+ax1 = Axis(fig[1, 1], title = &quot;PSNR Comparison&quot;, ylabel = &quot;PSNR (dB)&quot;,
+           xticks = (1:length(algs), algs), xticklabelrotation = Float32(pi/6))
+barplot!(ax1, 1:length(algs), [q.psnr for q in metrics], color = :royalblue)
+
+ax2 = Axis(fig[1, 2], title = &quot;SSIM Comparison&quot;, ylabel = &quot;SSIM&quot;,
+           xticks = (1:length(algs), algs), xticklabelrotation = Float32(pi/6))
+barplot!(ax2, 1:length(algs), [q.ssim for q in metrics], color = :forestgreen)
+fig</code></pre><pre><code class="language-text hljs">====================================================================
+Algorithm       |  PSNR (dB) |       SSIM |       RMSE |        NCC
+--------------------------------------------------------------------
+FDK (Hann)      |      28.47 |     0.9592 |     0.0532 |     0.9613
+SART            |      28.73 |     0.9604 |     0.0543 |     0.9594
+SART-TV         |      24.17 |     0.6712 |     0.2043 |     0.7032
+FISTA (TV)      |      29.48 |     0.9731 |     0.0444 |     0.9727
+AW-ASD-POCS     |      28.41 |     0.9560 |     0.0574 |     0.9547
+IRN-TV-CGLS     |      26.04 |     0.9165 |     0.0727 |     0.9310
+====================================================================</code></pre><p><img src="../../assets/tutorials/11_low_dose_regularization_02.png" alt/></p><h2 id="5.-Visual-Comparison-and-Profile-Analysis"><a class="docs-heading-anchor" href="#5.-Visual-Comparison-and-Profile-Analysis">5. Visual Comparison &amp; Profile Analysis</a><a id="5.-Visual-Comparison-and-Profile-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#5.-Visual-Comparison-and-Profile-Analysis" title="Permalink"></a></h2><p>We inspect axial slices (<span>$Z = 3N/8$</span>) and line profiles across fine inner structures of the Shepp-Logan phantom.</p><pre><code class="language-julia hljs">mid_z = 3 * size(phantom, 3) ÷ 8
+clims = (0.0f0, 1.0f0)
+titles = [&quot;Ground Truth&quot;, &quot;FDK (Hann)&quot;, &quot;SART&quot;, &quot;SART-TV&quot;, &quot;FISTA (auto)&quot;, &quot;IRN-TV-CGLS&quot;]
+imgs = [phantom, rec_fdk, rec_sart, rec_sart_tv, rec_fista, rec_irn]
+
+fig = Figure(size = (950, 600))
+for (idx, (t, vol)) in enumerate(zip(titles, imgs))
+    row = (idx - 1) ÷ 3 + 1
+    col = (idx - 1) % 3 + 1
+    ax = Axis(fig[row, col], title = t, aspect = DataAspect())
+    heatmap!(ax, vol[:, :, mid_z], colormap = :grays, colorrange = clims)
+end
+fig</code></pre><p><img src="../../assets/tutorials/11_low_dose_regularization_03.png" alt/></p><pre><code class="language-julia hljs"># Horizontal line profile (Z = 3N/8) through high-contrast small structures
+mid_y = size(phantom, 2) ÷ 2
+prof_gt  = phantom[:, mid_y, mid_z]
+prof_fdk = rec_fdk[:, mid_y, mid_z]
+prof_stv = rec_sart_tv[:, mid_y, mid_z]
+prof_fst = rec_fista[:, mid_y, mid_z]
+prof_irn = rec_irn[:, mid_y, mid_z]
+
+fig = Figure(size = (800, 350))
+ax = Axis(fig[1, 1], title = &quot;Horizontal Line Profile (Y=$mid_y, Z=$mid_z)&quot;,
+          xlabel = &quot;Voxel X&quot;, ylabel = &quot;Attenuation&quot;)
+lines!(ax, prof_gt, label = &quot;Ground Truth&quot;, linewidth = 2, color = :black)
+lines!(ax, prof_fdk, label = &quot;FDK (Hann)&quot;, linewidth = 1, linestyle = :dot, color = :gray)
+lines!(ax, prof_stv, label = &quot;SART-TV&quot;, linewidth = 1.5, color = :blue)
+lines!(ax, prof_fst, label = &quot;FISTA&quot;, linewidth = 1.5, color = :red)
+lines!(ax, prof_irn, label = &quot;IRN-TV-CGLS&quot;, linewidth = 1.5, linestyle = :dash, color = :green)
+axislegend(ax, position = :rt)
+fig</code></pre><p><img src="../../assets/tutorials/11_low_dose_regularization_04.png" alt/></p><h2 id="6.-Summary-and-Recommendations"><a class="docs-heading-anchor" href="#6.-Summary-and-Recommendations">6. Summary &amp; Recommendations</a><a id="6.-Summary-and-Recommendations-1"></a><a class="docs-heading-anchor-permalink" href="#6.-Summary-and-Recommendations" title="Permalink"></a></h2><table><tr><th style="text-align: left">Algorithm</th><th style="text-align: left">Noise Suppression</th><th style="text-align: left">Edge Sharpness</th><th style="text-align: left">Computation Speed</th><th style="text-align: left">Recommended Use Case</th></tr><tr><td style="text-align: left"><strong>FDK</strong></td><td style="text-align: left">Poor (amplified noise)</td><td style="text-align: left">High</td><td style="text-align: left">Ultra-fast (single pass)</td><td style="text-align: left">High-dose CT / quick preview</td></tr><tr><td style="text-align: left"><strong>SART</strong></td><td style="text-align: left">Moderate (algebraic averaging)</td><td style="text-align: left">Moderate</td><td style="text-align: left">Fast</td><td style="text-align: left">Moderate dose without TV</td></tr><tr><td style="text-align: left"><strong>SART-TV</strong></td><td style="text-align: left">High</td><td style="text-align: left">High</td><td style="text-align: left">Moderate</td><td style="text-align: left">General low-dose CT</td></tr><tr><td style="text-align: left"><strong>FISTA (TV)</strong></td><td style="text-align: left">Very High</td><td style="text-align: left">High</td><td style="text-align: left">Fast (<code>hyper=:auto</code>)</td><td style="text-align: left">Large-volume low-dose CT</td></tr><tr><td style="text-align: left"><strong>AW-ASD-POCS</strong></td><td style="text-align: left">Very High</td><td style="text-align: left">Excellent (adaptive edge)</td><td style="text-align: left">Moderate</td><td style="text-align: left">High-detail tissue interfaces</td></tr><tr><td style="text-align: left"><strong>IRN-TV-CGLS</strong></td><td style="text-align: left">High</td><td style="text-align: left">Very High (reweighted norm)</td><td style="text-align: left">Moderate</td><td style="text-align: left">High-contrast target recovery</td></tr></table></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../10_emission_mlem_osem/">« 10: Emission Tomography (PET/SPECT)</a><a class="docs-footer-nextpage" href="../12_sparse_view_cs/">12: Sparse-View CT &amp; Compressed Sensing »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Saturday 10 October 2026 07:37">Saturday 10 October 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

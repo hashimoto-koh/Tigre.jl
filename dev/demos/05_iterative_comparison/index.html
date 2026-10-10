@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>05: Iterative Algorithms Comparison · Tigre.jl</title><meta name="title" content="05: Iterative Algorithms Comparison · Tigre.jl"/><meta property="og:title" content="05: Iterative Algorithms Comparison · Tigre.jl"/><meta property="twitter:title" content="05: Iterative Algorithms Comparison · Tigre.jl"/><meta name="description" content="Documentation for Tigre.jl."/><meta property="og:description" content="Documentation for Tigre.jl."/><meta property="twitter:description" content="Documentation for Tigre.jl."/><meta property="og:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/05_iterative_comparison/"/><meta property="twitter:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/05_iterative_comparison/"/><link rel="canonical" href="https://hashimoto-koh.github.io/Tigre.jl/demos/05_iterative_comparison/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Tigre.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../about_tigre/">About TIGRE &amp; Upstream</a></li><li><a class="tocitem" href="../../quickstart/">Quick Start</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li><li><a class="tocitem" href="../../geometry/">Geometry Specification</a></li><li><a class="tocitem" href="../../operators/">Operators &amp; Weights</a></li><li><a class="tocitem" href="../../algorithms/">Algorithms</a></li><li><a class="tocitem" href="../../workspace_reuse/">Workspace &amp; Plan Reuse</a></li><li><a class="tocitem" href="../../phantoms/">Phantoms</a></li><li><span class="tocitem">Demonstrations</span><ul><li><a class="tocitem" href="../01_2D_parallel_beam/">01: 2D Parallel-Beam</a></li><li><a class="tocitem" href="../02_2D_cone_beam/">02: 2D Cone-Beam (Fan-Beam)</a></li><li><a class="tocitem" href="../03_3D_parallel_beam/">03: 3D Parallel-Beam</a></li><li><a class="tocitem" href="../04_3D_cone_beam/">04: 3D Cone-Beam (CBCT)</a></li><li class="is-active"><a class="tocitem" href>05: Iterative Algorithms Comparison</a><ul class="internal"><li><a class="tocitem" href="#Prerequisites"><span>Prerequisites</span></a></li><li><a class="tocitem" href="#1.-Phantom-and-Sparse-View-Geometry-Setup"><span>1. Phantom and Sparse-View Geometry Setup</span></a></li><li><a class="tocitem" href="#2.-Running-the-6-Solvers"><span>2. Running the 6 Solvers</span></a></li><li><a class="tocitem" href="#3.-Visual-Comparison-Matrix"><span>3. Visual Comparison Matrix</span></a></li><li><a class="tocitem" href="#4.-Quantitative-Metrics:-Normalized-RMSE"><span>4. Quantitative Metrics: Normalized RMSE</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../06_krylov_solvers/">06: Krylov Subspace Solvers</a></li><li><a class="tocitem" href="../07_preprocessing/">07: Projection Preprocessing &amp; COR</a></li><li><a class="tocitem" href="../08_offset_detector_fov/">08: Offset Detector &amp; Extended FOV</a></li><li><a class="tocitem" href="../09_laminography_conebeam/">09: Computed Laminography (CBCL)</a></li><li><a class="tocitem" href="../10_emission_mlem_osem/">10: Emission Tomography (PET/SPECT)</a></li><li><a class="tocitem" href="../11_low_dose_regularization/">11: Low-Dose CT &amp; Regularization</a></li><li><a class="tocitem" href="../12_sparse_view_cs/">12: Sparse-View CT &amp; Compressed Sensing</a></li><li><a class="tocitem" href="../13_workspace_reuse/">13: Workspace &amp; Plan Reuse</a></li></ul></li><li><a class="tocitem" href="../../visualization/">Visualization</a></li><li><a class="tocitem" href="../../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Demonstrations</a></li><li class="is-active"><a href>05: Iterative Algorithms Comparison</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>05: Iterative Algorithms Comparison</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl/blob/master/docs/src/demos/05_iterative_comparison.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Comparison-of-Iterative-CT-Reconstruction-Algorithms-(Sparse-View-CT)"><a class="docs-heading-anchor" href="#Comparison-of-Iterative-CT-Reconstruction-Algorithms-(Sparse-View-CT)">Comparison of Iterative CT Reconstruction Algorithms (Sparse-View CT)</a><a id="Comparison-of-Iterative-CT-Reconstruction-Algorithms-(Sparse-View-CT)-1"></a><a class="docs-heading-anchor-permalink" href="#Comparison-of-Iterative-CT-Reconstruction-Algorithms-(Sparse-View-CT)" title="Permalink"></a></h1><p>In low-dose and rapid CT scanning, the number of acquired projection angles is often severely constrained (e.g. only 30 angles). Under these conditions:</p><ul><li><strong>Direct methods (FDK)</strong> produce severe streak artifacts due to angular under-sampling.</li><li><strong>Unregularized iterative methods (SART, LSMR)</strong> reduce streaks but amplify high-frequency noise.</li><li><strong>Statistical methods (MLEM)</strong> model Poisson photon statistics.</li><li><strong>Total Variation regularized methods (FISTA, ASD-POCS)</strong> leverage compressed sensing principles to reconstruct clean, sharp images from sparse projections.</li></ul><p>This notebook evaluates and compares 6 distinct solvers on identical sparse-view data:</p><ol><li><code>fdk</code> (Analytical baseline)</li><li><code>sart</code> (Algebraic reconstruction)</li><li><code>lsmr</code> (Krylov subspace least squares)</li><li><code>mlem</code> (Maximum Likelihood Expectation Maximization)</li><li><code>fista</code> (Total Variation proximal gradient)</li><li><code>asd_pocs</code> (Adaptive Steepest Descent POCS)</li></ol><hr/><h3 id="Relevant-Functions-Used"><a class="docs-heading-anchor" href="#Relevant-Functions-Used">Relevant Functions Used</a><a id="Relevant-Functions-Used-1"></a><a class="docs-heading-anchor-permalink" href="#Relevant-Functions-Used" title="Permalink"></a></h3><ul><li><code>Tigre.shepp_logan_3d</code>: Generates analytical ground truth phantom.</li><li><code>Tigre.fdk</code>, <code>Tigre.sart</code>, <code>Tigre.lsmr</code>, <code>Tigre.mlem</code>, <code>Tigre.fista</code>, <code>Tigre.asd_pocs</code>.</li></ul><h2 id="Prerequisites"><a class="docs-heading-anchor" href="#Prerequisites">Prerequisites</a><a id="Prerequisites-1"></a><a class="docs-heading-anchor-permalink" href="#Prerequisites" title="Permalink"></a></h2><p>This tutorial uses <strong>Makie</strong> (recommended backend: <strong>CairoMakie</strong>) for visualization. If <code>CairoMakie</code> is not installed in your environment, add it by running <code>using Pkg; Pkg.add(&quot;CairoMakie&quot;)</code>.</p><pre><code class="language-julia hljs">using LinearAlgebra
+using CairoMakie
+using Tigre</code></pre><h2 id="1.-Phantom-and-Sparse-View-Geometry-Setup"><a class="docs-heading-anchor" href="#1.-Phantom-and-Sparse-View-Geometry-Setup">1. Phantom and Sparse-View Geometry Setup</a><a id="1.-Phantom-and-Sparse-View-Geometry-Setup-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Phantom-and-Sparse-View-Geometry-Setup" title="Permalink"></a></h2><p>We simulate a sparse-view acquisition with only <strong>45 projection angles</strong> over <span>$360^\circ$</span>.</p><pre><code class="language-julia hljs">N = 256
+vol_3d_full = shepp_logan_3d(N; phantom_type = :yu_ye_wang)
+phantom_2d = vol_3d_full[:, :, 3 * N ÷ 8]
+vol_phantom = reshape(phantom_2d, N, N, 1)
+
+# Only 45 projection angles!
+n_sparse_angles = 45
+angles = Float32.(range(0, 2pi, length=n_sparse_angles))
+
+n_det = 384
+geo = Geometry(
+    mode = :cone,
+    angles = angles,
+    nVoxel = (N, N, 1),
+    sVoxel = (Float32(N), Float32(N), 1.0f0),
+    nDetector = (n_det, 1),
+    sDetector = (Float32(n_det), 1.0f0),
+    DSO = 1000.0f0,
+    DSD = 1500.0f0,
+)
+
+println(&quot;Simulating sparse-view CT with $(n_sparse_angles) angles&quot;)
+projections = Ax(vol_phantom, geo);</code></pre><pre><code class="language-text hljs">Simulating sparse-view CT with 45 angles</code></pre><h2 id="2.-Running-the-6-Solvers"><a class="docs-heading-anchor" href="#2.-Running-the-6-Solvers">2. Running the 6 Solvers</a><a id="2.-Running-the-6-Solvers-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Running-the-6-Solvers" title="Permalink"></a></h2><pre><code class="language-julia hljs"># =============================================================================
+# Estimation of FISTA Lipschitz Hyperparameter (`hyper`)
+#
+# FISTA (Fast Iterative Shrinkage-Thresholding Algorithm) relies on proximal gradient descent.
+# Its gradient step size is proportional to 1 / hyper, where hyper represents the Lipschitz
+# constant L ≈ ||Aᵀ A||₂ (the spectral radius of the forward-backward projection operator).
+#
+# If `hyper` is left to the default fallback value, the gradient step size can be drastically
+# mismatched (e.g. orders of magnitude too conservative), leading to poor reconstruction quality
+# and near-zero convergence.
+#
+# We explicitly estimate `fista_hyper` beforehand using the SVD power method via `estimate_hyper(geo)`.
+# Storing it in an explicit variable before calling `fista` makes the parameter calibration step
+# transparent and easily verifiable, emphasizing the critical importance of proper operator norm scaling.
+# =============================================================================
+fista_hyper = estimate_hyper(geo)
+println(&quot;Estimated FISTA Lipschitz hyperparameter: &quot;, fista_hyper)
+</code></pre><pre><code class="language-text hljs">Estimated FISTA Lipschitz hyperparameter: 79802.766</code></pre><pre><code class="language-julia hljs">println(&quot;1. Running FDK...&quot;)
+rec_fdk = dropdims(fdk(projections, geo; filter = :hann), dims=3)
+
+println(&quot;2. Running SART (10 iterations)...&quot;)
+rec_sart = dropdims(sart(projections, geo, 10; lambda = 1.0f0), dims=3)
+
+println(&quot;3. Running LSMR (15 iterations)...&quot;)
+rec_lsmr = dropdims(lsmr(projections, geo, 15), dims=3)
+
+println(&quot;4. Running MLEM (15 iterations)...&quot;)
+rec_mlem = dropdims(mlem(projections, geo, 15), dims=3)
+
+println(&quot;5. Running FISTA with TV (40 iterations)...&quot;)
+rec_fista = dropdims(fista(projections, geo, 40; hyper = fista_hyper, tviter = 10, tvlambda = 0.05f0), dims=3)
+
+println(&quot;6. Running ASD-POCS with TV (15 iterations)...&quot;)
+rec_asdpocs = dropdims(asd_pocs(projections, geo, 15; tviter = 15, alpha = 0.002f0), dims=3)
+
+println(&quot;All reconstructions completed successfully!&quot;)
+</code></pre><pre><code class="language-text hljs">1. Running FDK...
+2. Running SART (10 iterations)...
+3. Running LSMR (15 iterations)...
+4. Running MLEM (15 iterations)...
+5. Running FISTA with TV (40 iterations)...
+6. Running ASD-POCS with TV (15 iterations)...
+All reconstructions completed successfully!</code></pre><h2 id="3.-Visual-Comparison-Matrix"><a class="docs-heading-anchor" href="#3.-Visual-Comparison-Matrix">3. Visual Comparison Matrix</a><a id="3.-Visual-Comparison-Matrix-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Visual-Comparison-Matrix" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Plot all reconstructions side-by-side
+titles = [
+    &quot;Ground Truth&quot;, &quot;1. FDK (Streaks!)&quot;, &quot;2. SART&quot;, &quot;3. LSMR&quot;,
+    &quot;4. MLEM&quot;, &quot;5. FISTA (TV)&quot;, &quot;6. ASD-POCS (TV)&quot;
+]
+imgs = [phantom_2d, rec_fdk, rec_sart, rec_lsmr, rec_mlem, rec_fista, rec_asdpocs]
+
+fig = Figure(size = (1200, 600))
+for (idx, (t, img)) in enumerate(zip(titles, imgs))
+    row = (idx - 1) ÷ 4 + 1
+    col = (idx - 1) % 4 + 1
+    ax = Axis(fig[row, col], title = t, aspect = DataAspect())
+    heatmap!(ax, img, colormap = :grays)
+end
+fig</code></pre><p><img src="../../assets/tutorials/05_iterative_comparison_01.png" alt/></p><h2 id="4.-Quantitative-Metrics:-Normalized-RMSE"><a class="docs-heading-anchor" href="#4.-Quantitative-Metrics:-Normalized-RMSE">4. Quantitative Metrics: Normalized RMSE</a><a id="4.-Quantitative-Metrics:-Normalized-RMSE-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Quantitative-Metrics:-Normalized-RMSE" title="Permalink"></a></h2><p>We calculate the Normalized Root Mean Squared Error (NRMSE) against the ground truth phantom: <span>$\text{NRMSE}(x, x^*) = \frac{\|x - x^*\|_2}{\|x^*\|_2}$</span></p><pre><code class="language-julia hljs">function nrmse(x, x_true)
+    return norm(vec(x) .- vec(x_true)) / norm(vec(x_true))
+end
+
+metrics = [
+    (&quot;FDK&quot;, nrmse(rec_fdk, phantom_2d)),
+    (&quot;SART&quot;, nrmse(rec_sart, phantom_2d)),
+    (&quot;LSMR&quot;, nrmse(rec_lsmr, phantom_2d)),
+    (&quot;MLEM&quot;, nrmse(rec_mlem, phantom_2d)),
+    (&quot;FISTA&quot;, nrmse(rec_fista, phantom_2d)),
+    (&quot;ASD-POCS&quot;, nrmse(rec_asdpocs, phantom_2d)),
+]
+
+println(&quot;--- Quantitative Accuracy (Normalized RMSE) ---&quot;)
+for (name, val) in metrics
+    println(rpad(name, 12), &quot;: &quot;, round(val, digits=4))
+end
+
+names = [m[1] for m in metrics]
+vals = [Float32(m[2]) for m in metrics]
+
+fig = Figure(size = (700, 380))
+ax = Axis(fig[1, 1], title = &quot;Reconstruction Error Comparison (Lower is Better)&quot;,
+          ylabel = &quot;NRMSE&quot;, xticks = (1:length(names), names),
+          xticklabelrotation = Float32(pi/6))
+barplot!(ax, 1:length(names), vals, color = :steelblue)
+fig
+</code></pre><pre><code class="language-text hljs">--- Quantitative Accuracy (Normalized RMSE) ---
+FDK         : 0.494
+SART        : 0.1624
+LSMR        : 0.5547
+MLEM        : 0.315
+FISTA       : 0.1981
+ASD-POCS    : 0.1475</code></pre><p><img src="../../assets/tutorials/05_iterative_comparison_02.png" alt/></p><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><ul><li><strong>FDK</strong>: Suffers from heavy view-aliasing streaks when projection count is low (<span>$N_\theta = 30$</span>).</li><li><strong>SART &amp; LSMR</strong>: Improve data fidelity and reduce global streaks, but residual noise remains.</li><li><strong>FISTA &amp; ASD-POCS</strong>: Total Variation regularizers suppress streak artifacts while recovering clean flat regions and sharp structural edges.</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../04_3D_cone_beam/">« 04: 3D Cone-Beam (CBCT)</a><a class="docs-footer-nextpage" href="../06_krylov_solvers/">06: Krylov Subspace Solvers »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Saturday 10 October 2026 07:37">Saturday 10 October 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

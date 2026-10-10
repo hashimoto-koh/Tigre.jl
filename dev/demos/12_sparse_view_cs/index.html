@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>12: Sparse-View CT &amp; Compressed Sensing · Tigre.jl</title><meta name="title" content="12: Sparse-View CT &amp; Compressed Sensing · Tigre.jl"/><meta property="og:title" content="12: Sparse-View CT &amp; Compressed Sensing · Tigre.jl"/><meta property="twitter:title" content="12: Sparse-View CT &amp; Compressed Sensing · Tigre.jl"/><meta name="description" content="Documentation for Tigre.jl."/><meta property="og:description" content="Documentation for Tigre.jl."/><meta property="twitter:description" content="Documentation for Tigre.jl."/><meta property="og:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/12_sparse_view_cs/"/><meta property="twitter:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/12_sparse_view_cs/"/><link rel="canonical" href="https://hashimoto-koh.github.io/Tigre.jl/demos/12_sparse_view_cs/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Tigre.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../about_tigre/">About TIGRE &amp; Upstream</a></li><li><a class="tocitem" href="../../quickstart/">Quick Start</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li><li><a class="tocitem" href="../../geometry/">Geometry Specification</a></li><li><a class="tocitem" href="../../operators/">Operators &amp; Weights</a></li><li><a class="tocitem" href="../../algorithms/">Algorithms</a></li><li><a class="tocitem" href="../../workspace_reuse/">Workspace &amp; Plan Reuse</a></li><li><a class="tocitem" href="../../phantoms/">Phantoms</a></li><li><span class="tocitem">Demonstrations</span><ul><li><a class="tocitem" href="../01_2D_parallel_beam/">01: 2D Parallel-Beam</a></li><li><a class="tocitem" href="../02_2D_cone_beam/">02: 2D Cone-Beam (Fan-Beam)</a></li><li><a class="tocitem" href="../03_3D_parallel_beam/">03: 3D Parallel-Beam</a></li><li><a class="tocitem" href="../04_3D_cone_beam/">04: 3D Cone-Beam (CBCT)</a></li><li><a class="tocitem" href="../05_iterative_comparison/">05: Iterative Algorithms Comparison</a></li><li><a class="tocitem" href="../06_krylov_solvers/">06: Krylov Subspace Solvers</a></li><li><a class="tocitem" href="../07_preprocessing/">07: Projection Preprocessing &amp; COR</a></li><li><a class="tocitem" href="../08_offset_detector_fov/">08: Offset Detector &amp; Extended FOV</a></li><li><a class="tocitem" href="../09_laminography_conebeam/">09: Computed Laminography (CBCL)</a></li><li><a class="tocitem" href="../10_emission_mlem_osem/">10: Emission Tomography (PET/SPECT)</a></li><li><a class="tocitem" href="../11_low_dose_regularization/">11: Low-Dose CT &amp; Regularization</a></li><li class="is-active"><a class="tocitem" href>12: Sparse-View CT &amp; Compressed Sensing</a><ul class="internal"><li><a class="tocitem" href="#Prerequisites"><span>Prerequisites</span></a></li><li><a class="tocitem" href="#1.-Ground-Truth-Volume-and-Full-View-Acquisition"><span>1. Ground Truth Volume &amp; Full-View Acquisition</span></a></li><li><a class="tocitem" href="#2.-Sparse-View-Subsampling-(subsample_angles)"><span>2. Sparse-View Subsampling (<code>subsample_angles</code>)</span></a></li><li><a class="tocitem" href="#3.-Analytical-Breakdown:-Streak-Artifacts-in-FDK"><span>3. Analytical Breakdown: Streak Artifacts in FDK</span></a></li><li><a class="tocitem" href="#4.-Compressed-Sensing-Restoration-on-20-Angle-Data"><span>4. Compressed Sensing Restoration on 20-Angle Data</span></a></li><li><a class="tocitem" href="#5.-Angular-Scaling-Performance-Curve"><span>5. Angular Scaling Performance Curve</span></a></li><li><a class="tocitem" href="#6.-Summary"><span>6. Summary</span></a></li></ul></li><li><a class="tocitem" href="../13_workspace_reuse/">13: Workspace &amp; Plan Reuse</a></li></ul></li><li><a class="tocitem" href="../../visualization/">Visualization</a></li><li><a class="tocitem" href="../../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Demonstrations</a></li><li class="is-active"><a href>12: Sparse-View CT &amp; Compressed Sensing</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>12: Sparse-View CT &amp; Compressed Sensing</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl/blob/master/docs/src/demos/12_sparse_view_cs.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Sparse-View-CT-and-Compressed-Sensing-with-Tigre.jl"><a class="docs-heading-anchor" href="#Sparse-View-CT-and-Compressed-Sensing-with-Tigre.jl">Sparse-View CT &amp; Compressed Sensing with Tigre.jl</a><a id="Sparse-View-CT-and-Compressed-Sensing-with-Tigre.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Sparse-View-CT-and-Compressed-Sensing-with-Tigre.jl" title="Permalink"></a></h1><p>Acquiring fewer projection angles drastically reduces scanning time and radiation dose. However, standard analytical reconstruction (FDK) suffers from severe radial streak artifacts and aliasing when the Nyquist angular sampling criteria is violated.</p><p><strong>Compressed Sensing (CS)</strong> theory proves that sparse signals (such as gradient-sparse tomographic attenuation maps) can be perfectly reconstructed from far fewer measurements than Nyquist limits by solving constrained Total Variation (TV) minimization problems.</p><p>This tutorial explores:</p><ol><li><strong>Generating sparse-view projection sets</strong> from full-scan data using <code>subsample_angles</code>.</li><li><strong>Observing aliasing streak artifacts</strong> in analytical FDK across different sampling rates (180, 45, 20, 10 projections).</li><li><strong>Restoring streak-free volumes</strong> using advanced CS solvers: <strong>ASD-POCS</strong>, <strong>AW-ASD-POCS</strong>, and <strong>Hybrid-FLSQR-TV</strong>.</li><li><strong>Analyzing the Angular Scaling Curve</strong>: Plotting PSNR and SSIM as a function of projection angle count.</li></ol><hr/><h3 id="Key-Tigre.jl-Features-Demonstrated"><a class="docs-heading-anchor" href="#Key-Tigre.jl-Features-Demonstrated">Key Tigre.jl Features Demonstrated</a><a id="Key-Tigre.jl-Features-Demonstrated-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Tigre.jl-Features-Demonstrated" title="Permalink"></a></h3><ul><li><code>Tigre.subsample_angles</code>: Multi-parameter synchronous geometry and projection downsampling.</li><li><code>Tigre.asd_pocs</code>: Adaptive Steepest Descent Projection Onto Convex Sets.</li><li><code>Tigre.awasd_pocs</code>: Edge-preserving Adaptive-Weighted ASD-POCS.</li><li><code>Tigre.hybrid_flsqr_tv</code>: Subspace bidiagonalization with TV preconditioning.</li><li><code>Tigre.crop_cbct!</code>: Zero-allocation in-place cylindrical FOV masking.</li><li><code>Tigre.measure_quality</code>: Quantitative fidelity benchmark (PSNR, SSIM, RMSE, NCC).</li></ul><h2 id="Prerequisites"><a class="docs-heading-anchor" href="#Prerequisites">Prerequisites</a><a id="Prerequisites-1"></a><a class="docs-heading-anchor-permalink" href="#Prerequisites" title="Permalink"></a></h2><p>This tutorial uses <strong>Makie</strong> (recommended backend: <strong>CairoMakie</strong>) for visualization. If <code>CairoMakie</code> is not installed in your environment, add it by running <code>using Pkg; Pkg.add(&quot;CairoMakie&quot;)</code>.</p><pre><code class="language-julia hljs">using LinearAlgebra
+using Printf
+using Random
+using CairoMakie
+using Tigre</code></pre><h2 id="1.-Ground-Truth-Volume-and-Full-View-Acquisition"><a class="docs-heading-anchor" href="#1.-Ground-Truth-Volume-and-Full-View-Acquisition">1. Ground Truth Volume &amp; Full-View Acquisition</a><a id="1.-Ground-Truth-Volume-and-Full-View-Acquisition-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Ground-Truth-Volume-and-Full-View-Acquisition" title="Permalink"></a></h2><p>We set up a standard 3D cone-beam acquisition with 180 projections covering a full <span>$360^\circ$</span> rotation.</p><pre><code class="language-julia hljs">nangles_full = 180
+angles_full = LinRange(0f0, 2f0 * Float32(pi), nangles_full + 1)[1:end-1] |&gt; collect
+
+geo_full = Geometry(
+    mode = :cone,
+    angles = angles_full,
+    nVoxel = (256, 256, 256),
+    sVoxel = (256f0, 256f0, 256f0),
+    nDetector = (320, 320),
+    sDetector = (480f0, 480f0),
+    DSO = 1000f0,
+    DSD = 1500f0,
+)
+
+phantom = shepp_logan_3d(volume_size(geo_full))
+proj_full = Ax(phantom, geo_full)
+
+println(&quot;Full acquisition: $(projection_count(geo_full)) angles, $(size(proj_full)) projections&quot;)
+</code></pre><pre><code class="language-text hljs">Full acquisition: 180 angles, (320, 320, 180) projections</code></pre><h2 id="2.-Sparse-View-Subsampling-(subsample_angles)"><a class="docs-heading-anchor" href="#2.-Sparse-View-Subsampling-(subsample_angles)">2. Sparse-View Subsampling (<code>subsample_angles</code>)</a><a id="2.-Sparse-View-Subsampling-(subsample_angles)-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Sparse-View-Subsampling-(subsample_angles)" title="Permalink"></a></h2><p>We create systematically downsampled datasets corresponding to 45 angles (1/4 dose), 20 angles (1/9 dose), and 12 angles (1/15 dose).</p><pre><code class="language-julia hljs">proj_45, geo_45 = subsample_angles(proj_full, geo_full, 4)   # 180 / 4 = 45 angles
+proj_20, geo_20 = subsample_angles(proj_full, geo_full, 9)   # 180 / 9 = 20 angles
+proj_12, geo_12 = subsample_angles(proj_full, geo_full, 15)  # 180 / 15 = 12 angles
+
+println(&quot;Subsampled sets created:&quot;)
+println(&quot;  - Rate 1/4:  $(projection_count(geo_45)) angles&quot;)
+println(&quot;  - Rate 1/9:  $(projection_count(geo_20)) angles&quot;)
+println(&quot;  - Rate 1/15: $(projection_count(geo_12)) angles&quot;)
+</code></pre><pre><code class="language-text hljs">Subsampled sets created:
+  - Rate 1/4:  45 angles
+  - Rate 1/9:  20 angles
+  - Rate 1/15: 12 angles</code></pre><h2 id="3.-Analytical-Breakdown:-Streak-Artifacts-in-FDK"><a class="docs-heading-anchor" href="#3.-Analytical-Breakdown:-Streak-Artifacts-in-FDK">3. Analytical Breakdown: Streak Artifacts in FDK</a><a id="3.-Analytical-Breakdown:-Streak-Artifacts-in-FDK-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Analytical-Breakdown:-Streak-Artifacts-in-FDK" title="Permalink"></a></h2><p>When angular sampling drops below Nyquist requirements, high-frequency backprojection rays fail to cancel constructively, producing severe radial star streaks.</p><pre><code class="language-julia hljs">fdk_180 = crop_cbct!(fdk(proj_full, geo_full; filter = :hann), geo_full)
+fdk_45  = crop_cbct!(fdk(proj_45,   geo_45;   filter = :hann), geo_45)
+fdk_20  = crop_cbct!(fdk(proj_20,   geo_20;   filter = :hann), geo_20)
+fdk_12  = crop_cbct!(fdk(proj_12,   geo_12;   filter = :hann), geo_12)
+
+mid_z = 3 * size(phantom, 3) ÷ 8
+clims = (0.0f0, 0.4f0)
+
+fig = Figure(size = (750, 700))
+ax1 = Axis(fig[1, 1], title = &quot;FDK (180 angles)&quot;, aspect = DataAspect())
+heatmap!(ax1, fdk_180[:, :, mid_z], colormap = :grays, colorrange = clims)
+
+ax2 = Axis(fig[1, 2], title = &quot;FDK (45 angles)&quot;, aspect = DataAspect())
+heatmap!(ax2, fdk_45[:, :, mid_z], colormap = :grays, colorrange = clims)
+
+ax3 = Axis(fig[2, 1], title = &quot;FDK (20 angles)&quot;, aspect = DataAspect())
+heatmap!(ax3, fdk_20[:, :, mid_z], colormap = :grays, colorrange = clims)
+
+ax4 = Axis(fig[2, 2], title = &quot;FDK (12 angles)&quot;, aspect = DataAspect())
+hm = heatmap!(ax4, fdk_12[:, :, mid_z], colormap = :grays, colorrange = clims)
+
+Colorbar(fig[:, 3], hm)
+fig</code></pre><p><img src="../../assets/tutorials/12_sparse_view_cs_01.png" alt/></p><h2 id="4.-Compressed-Sensing-Restoration-on-20-Angle-Data"><a class="docs-heading-anchor" href="#4.-Compressed-Sensing-Restoration-on-20-Angle-Data">4. Compressed Sensing Restoration on 20-Angle Data</a><a id="4.-Compressed-Sensing-Restoration-on-20-Angle-Data-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Compressed-Sensing-Restoration-on-20-Angle-Data" title="Permalink"></a></h2><p>Using the severely undersampled 20-angle dataset (where FDK is completely overwhelmed by streaks), we test three Compressed Sensing solvers:</p><ol><li><strong>ASD-POCS</strong>: Adaptive steepest descent on total variation with data-consistency projections.</li><li><strong>AW-ASD-POCS</strong>: Adaptive-Weighted ASD-POCS that preserves delicate edges by moderating TV penalties along strong image gradients.</li><li><strong>Hybrid-FLSQR-TV</strong>: Krylov subspace bidiagonalization with TV regularization.</li></ol><pre><code class="language-julia hljs">println(&quot;--&gt; Reconstructing 20-angle data with ASD-POCS...&quot;)
+rec_asd = asd_pocs(proj_20, geo_20, 12; tviter = 10, alpha = 0.002f0)
+crop_cbct!(rec_asd, geo_20)
+
+println(&quot;--&gt; Reconstructing 20-angle data with AW-ASD-POCS...&quot;)
+rec_awasd = awasd_pocs(proj_20, geo_20, 12; tviter = 10, alpha = 0.002f0)
+crop_cbct!(rec_awasd, geo_20)
+
+println(&quot;--&gt; Reconstructing 20-angle data with Hybrid-FLSQR-TV...&quot;)
+rec_hflsqr = hybrid_flsqr_tv(proj_20, geo_20, 6; lambda = 0.05f0, precond_steps = 3)
+crop_cbct!(rec_hflsqr, geo_20)
+
+q_fdk20   = measure_quality(phantom, fdk_20)
+q_asd20   = measure_quality(phantom, rec_asd)
+q_awasd20 = measure_quality(phantom, rec_awasd)
+q_hfl20   = measure_quality(phantom, rec_hflsqr)
+
+println(&quot;=&quot; ^ 68)
+@printf(&quot;20-Angle Algorithm | %10s | %10s | %10s\n&quot;, &quot;PSNR (dB)&quot;, &quot;SSIM&quot;, &quot;RMSE&quot;)
+println(&quot;-&quot; ^ 68)
+@printf(&quot;%-19s | %10.2f | %10.4f | %10.4f\n&quot;, &quot;FDK (Baseline)&quot;, q_fdk20.psnr, q_fdk20.ssim, q_fdk20.rmse)
+@printf(&quot;%-19s | %10.2f | %10.4f | %10.4f\n&quot;, &quot;ASD-POCS&quot;, q_asd20.psnr, q_asd20.ssim, q_asd20.rmse)
+@printf(&quot;%-19s | %10.2f | %10.4f | %10.4f\n&quot;, &quot;AW-ASD-POCS&quot;, q_awasd20.psnr, q_awasd20.ssim, q_awasd20.rmse)
+@printf(&quot;%-19s | %10.2f | %10.4f | %10.4f\n&quot;, &quot;Hybrid-FLSQR-TV&quot;, q_hfl20.psnr, q_hfl20.ssim, q_hfl20.rmse)
+println(&quot;=&quot; ^ 68)
+
+fig = Figure(size = (800, 750))
+ax1 = Axis(fig[1, 1], title = &quot;Ground Truth&quot;, aspect = DataAspect())
+heatmap!(ax1, phantom[:, :, mid_z], colormap = :grays, colorrange = clims)
+
+ax2 = Axis(fig[1, 2], title = &quot;FDK (20 views, PSNR=$(round(q_fdk20.psnr, digits=1)))&quot;, aspect = DataAspect())
+heatmap!(ax2, fdk_20[:, :, mid_z], colormap = :grays, colorrange = clims)
+
+ax3 = Axis(fig[2, 1], title = &quot;ASD-POCS (PSNR=$(round(q_asd20.psnr, digits=1)))&quot;, aspect = DataAspect())
+heatmap!(ax3, rec_asd[:, :, mid_z], colormap = :grays, colorrange = clims)
+
+ax4 = Axis(fig[2, 2], title = &quot;AW-ASD-POCS (PSNR=$(round(q_awasd20.psnr, digits=1)))&quot;, aspect = DataAspect())
+hm = heatmap!(ax4, rec_awasd[:, :, mid_z], colormap = :grays, colorrange = clims)
+
+Colorbar(fig[:, 3], hm)
+fig</code></pre><pre><code class="language-text hljs">--&gt; Reconstructing 20-angle data with ASD-POCS...
+--&gt; Reconstructing 20-angle data with AW-ASD-POCS...
+--&gt; Reconstructing 20-angle data with Hybrid-FLSQR-TV...
+====================================================================
+20-Angle Algorithm |  PSNR (dB) |       SSIM |       RMSE
+--------------------------------------------------------------------
+FDK (Baseline)      |      23.67 |     0.7600 |     0.1478
+ASD-POCS            |      27.01 |     0.9554 |     0.0546
+AW-ASD-POCS         |      26.92 |     0.9533 |     0.0559
+Hybrid-FLSQR-TV     |      21.66 |     0.7965 |     0.1098
+====================================================================</code></pre><p><img src="../../assets/tutorials/12_sparse_view_cs_02.png" alt/></p><h2 id="5.-Angular-Scaling-Performance-Curve"><a class="docs-heading-anchor" href="#5.-Angular-Scaling-Performance-Curve">5. Angular Scaling Performance Curve</a><a id="5.-Angular-Scaling-Performance-Curve-1"></a><a class="docs-heading-anchor-permalink" href="#5.-Angular-Scaling-Performance-Curve" title="Permalink"></a></h2><p>We plot reconstruction quality across angle budgets to reveal the Compressed Sensing phase transition.</p><pre><code class="language-julia hljs">angle_counts = [12, 20, 45, 180]
+fdk_psnrs  = [measure_quality(phantom, v).psnr for v in (fdk_12, fdk_20, fdk_45, fdk_180)]
+fdk_ssims  = [measure_quality(phantom, v).ssim for v in (fdk_12, fdk_20, fdk_45, fdk_180)]
+
+# Compute CS (AW-ASD-POCS) at each angle count
+cs_psnrs = Float64[]
+cs_ssims = Float64[]
+for (p, g) in ((proj_12, geo_12), (proj_20, geo_20), (proj_45, geo_45), (proj_full, geo_full))
+    v = crop_cbct!(awasd_pocs(p, g, 8; tviter = 6, alpha = 0.002f0), g)
+    q = measure_quality(phantom, v)
+    push!(cs_psnrs, q.psnr)
+    push!(cs_ssims, q.ssim)
+end
+
+fig = Figure(size = (850, 360))
+
+ax1 = Axis(fig[1, 1], title = &quot;PSNR vs Sampling Budget&quot;, xlabel = &quot;Projection Angles&quot;, ylabel = &quot;PSNR (dB)&quot;)
+scatterlines!(ax1, angle_counts, fdk_psnrs, label = &quot;FDK&quot;, color = :gray, linewidth = 2)
+scatterlines!(ax1, angle_counts, cs_psnrs, label = &quot;AW-ASD-POCS (CS)&quot;, color = :crimson, marker = :rect, linewidth = 2)
+axislegend(ax1, position = :rb)
+
+ax2 = Axis(fig[1, 2], title = &quot;SSIM vs Sampling Budget&quot;, xlabel = &quot;Projection Angles&quot;, ylabel = &quot;SSIM&quot;)
+scatterlines!(ax2, angle_counts, fdk_ssims, label = &quot;FDK&quot;, color = :gray, linewidth = 2)
+scatterlines!(ax2, angle_counts, cs_ssims, label = &quot;AW-ASD-POCS (CS)&quot;, color = :crimson, marker = :rect, linewidth = 2)
+axislegend(ax2, position = :rb)
+fig</code></pre><p><img src="../../assets/tutorials/12_sparse_view_cs_03.png" alt/></p><h2 id="6.-Summary"><a class="docs-heading-anchor" href="#6.-Summary">6. Summary</a><a id="6.-Summary-1"></a><a class="docs-heading-anchor-permalink" href="#6.-Summary" title="Permalink"></a></h2><ul><li><strong>Aliasing Threshold</strong>: For circular CBCT, FDK quality plummets sharply below 60 projections due to uncancelled star streaks.</li><li><strong>Compressed Sensing Restoration</strong>: Algorithms such as <code>asd_pocs</code> and <code>awasd_pocs</code> exploit the sparsity of the image gradient (<span>$\|\nabla x\|_1$</span>) to completely suppress streak artifacts, maintaining high fidelity down to 20 projections.</li><li><strong>Edge Preservation</strong>: <code>awasd_pocs</code> adaptively modulates TV weights at gradient boundaries, preventing artificial over-smoothing and cartoon-like blockiness at high contrast edges.</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../11_low_dose_regularization/">« 11: Low-Dose CT &amp; Regularization</a><a class="docs-footer-nextpage" href="../13_workspace_reuse/">13: Workspace &amp; Plan Reuse »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Saturday 10 October 2026 07:37">Saturday 10 October 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

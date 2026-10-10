@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>06: Krylov Subspace Solvers · Tigre.jl</title><meta name="title" content="06: Krylov Subspace Solvers · Tigre.jl"/><meta property="og:title" content="06: Krylov Subspace Solvers · Tigre.jl"/><meta property="twitter:title" content="06: Krylov Subspace Solvers · Tigre.jl"/><meta name="description" content="Documentation for Tigre.jl."/><meta property="og:description" content="Documentation for Tigre.jl."/><meta property="twitter:description" content="Documentation for Tigre.jl."/><meta property="og:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/06_krylov_solvers/"/><meta property="twitter:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/06_krylov_solvers/"/><link rel="canonical" href="https://hashimoto-koh.github.io/Tigre.jl/demos/06_krylov_solvers/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Tigre.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../about_tigre/">About TIGRE &amp; Upstream</a></li><li><a class="tocitem" href="../../quickstart/">Quick Start</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li><li><a class="tocitem" href="../../geometry/">Geometry Specification</a></li><li><a class="tocitem" href="../../operators/">Operators &amp; Weights</a></li><li><a class="tocitem" href="../../algorithms/">Algorithms</a></li><li><a class="tocitem" href="../../workspace_reuse/">Workspace &amp; Plan Reuse</a></li><li><a class="tocitem" href="../../phantoms/">Phantoms</a></li><li><span class="tocitem">Demonstrations</span><ul><li><a class="tocitem" href="../01_2D_parallel_beam/">01: 2D Parallel-Beam</a></li><li><a class="tocitem" href="../02_2D_cone_beam/">02: 2D Cone-Beam (Fan-Beam)</a></li><li><a class="tocitem" href="../03_3D_parallel_beam/">03: 3D Parallel-Beam</a></li><li><a class="tocitem" href="../04_3D_cone_beam/">04: 3D Cone-Beam (CBCT)</a></li><li><a class="tocitem" href="../05_iterative_comparison/">05: Iterative Algorithms Comparison</a></li><li class="is-active"><a class="tocitem" href>06: Krylov Subspace Solvers</a><ul class="internal"><li><a class="tocitem" href="#Prerequisites"><span>Prerequisites</span></a></li><li><a class="tocitem" href="#1.-Geometry-Setup-and-Ground-Truth-Phantom"><span>1. Geometry Setup &amp; Ground Truth Phantom</span></a></li><li><a class="tocitem" href="#2.-Zero-Allocation-High-Throughput:-prepare_krylov_workspace"><span>2. Zero-Allocation High-Throughput: <code>prepare_krylov_workspace</code></span></a></li><li><a class="tocitem" href="#3.-Benchmarking-Krylov-Solvers-with-History-Tracking"><span>3. Benchmarking Krylov Solvers with History Tracking</span></a></li><li><a class="tocitem" href="#4.-Quantitative-Convergence-and-Residual-Evolution"><span>4. Quantitative Convergence &amp; Residual Evolution</span></a></li><li><a class="tocitem" href="#5.-Image-Quality-Assessment-and-Visual-Slice-Inspection"><span>5. Image Quality Assessment &amp; Visual Slice Inspection</span></a></li><li><a class="tocitem" href="#6.-High-Contrast-Line-Profile-Analysis"><span>6. High-Contrast Line Profile Analysis</span></a></li><li><a class="tocitem" href="#7.-Summary-and-Krylov-Solver-Selection-Guide"><span>7. Summary &amp; Krylov Solver Selection Guide</span></a></li></ul></li><li><a class="tocitem" href="../07_preprocessing/">07: Projection Preprocessing &amp; COR</a></li><li><a class="tocitem" href="../08_offset_detector_fov/">08: Offset Detector &amp; Extended FOV</a></li><li><a class="tocitem" href="../09_laminography_conebeam/">09: Computed Laminography (CBCL)</a></li><li><a class="tocitem" href="../10_emission_mlem_osem/">10: Emission Tomography (PET/SPECT)</a></li><li><a class="tocitem" href="../11_low_dose_regularization/">11: Low-Dose CT &amp; Regularization</a></li><li><a class="tocitem" href="../12_sparse_view_cs/">12: Sparse-View CT &amp; Compressed Sensing</a></li><li><a class="tocitem" href="../13_workspace_reuse/">13: Workspace &amp; Plan Reuse</a></li></ul></li><li><a class="tocitem" href="../../visualization/">Visualization</a></li><li><a class="tocitem" href="../../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Demonstrations</a></li><li class="is-active"><a href>06: Krylov Subspace Solvers</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>06: Krylov Subspace Solvers</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl/blob/master/docs/src/demos/06_krylov_solvers.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Krylov-Subspace-Solvers-in-Tigre.jl:-CGLS,-LSQR,-LSMR,-and-Hybrid-Methods"><a class="docs-heading-anchor" href="#Krylov-Subspace-Solvers-in-Tigre.jl:-CGLS,-LSQR,-LSMR,-and-Hybrid-Methods">Krylov Subspace Solvers in Tigre.jl: CGLS, LSQR, LSMR, &amp; Hybrid Methods</a><a id="Krylov-Subspace-Solvers-in-Tigre.jl:-CGLS,-LSQR,-LSMR,-and-Hybrid-Methods-1"></a><a class="docs-heading-anchor-permalink" href="#Krylov-Subspace-Solvers-in-Tigre.jl:-CGLS,-LSQR,-LSMR,-and-Hybrid-Methods" title="Permalink"></a></h1><p>Tomographic iterative reconstruction poses large-scale linear least-squares problems of the form: <span>$\min_x \frac{1}{2} \| A x - b \|_2^2$</span> where <span>$A$</span> is the cone-beam projection operator (<code>Ax</code>), <span>$A^T$</span> is the backprojection operator (<code>Atb</code>), and <span>$b$</span> is the measured sinogram.</p><p>Because <span>$A$</span> cannot be explicitly formed or stored in memory for 3D volumes (which often contain millions to billions of voxels), <strong>matrix-free Krylov subspace methods</strong> are the gold standard for fast, high-accuracy CT reconstruction. These methods iteratively construct optimal polynomial approximations in the Krylov subspace <span>$\mathcal{K}_k(A^T A, A^T b)$</span> using only forward and adjoint projection calls.</p><h3 id="Solvers-Benchmarked-in-this-Tutorial"><a class="docs-heading-anchor" href="#Solvers-Benchmarked-in-this-Tutorial">Solvers Benchmarked in this Tutorial</a><a id="Solvers-Benchmarked-in-this-Tutorial-1"></a><a class="docs-heading-anchor-permalink" href="#Solvers-Benchmarked-in-this-Tutorial" title="Permalink"></a></h3><ol><li><strong>CGLS (Conjugate Gradient for Least Squares)</strong>: Solves the normal equations <span>$A^T A x = A^T b$</span> directly using conjugate gradients with implicit <span>$A^T A$</span> operations.</li><li><strong>LSQR (Golub-Kahan Bidiagonalization)</strong>: Analytically equivalent to CGLS in exact arithmetic, but provides superior numerical stability in ill-conditioned and rank-deficient regimes.</li><li><strong>LSMR (Minimal Residual on Normal Equations)</strong>: Solves <span>$\min_x \| A^T (A x - b) \|_2$</span>, guaranteeing monotonically non-increasing normal equation residuals.</li><li><strong>Hybrid-LSQR (Subspace Regularization)</strong>: Projects the problem into a Krylov subspace of dimension <span>$k$</span> and solves a projected Tikhonov regularized problem at each step.</li><li><strong>AB-GMRES / BA-GMRES</strong>: Generalized Minimal Residual formulations adapted for unsymmetric and rectangular tomographic operators.</li></ol><hr/><h3 id="Key-Tigre.jl-Features-Demonstrated"><a class="docs-heading-anchor" href="#Key-Tigre.jl-Features-Demonstrated">Key Tigre.jl Features Demonstrated</a><a id="Key-Tigre.jl-Features-Demonstrated-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Tigre.jl-Features-Demonstrated" title="Permalink"></a></h3><ul><li><strong><code>prepare_krylov_workspace</code></strong>: One-time preallocation of projection and volume buffers for zero-allocation high-throughput iterative loops.</li><li><strong>In-place computation (<code>cgls!</code>, <code>lsqr!</code>, <code>lsmr!</code>)</strong>: Direct volume updates eliminating intermediate garbage collection overhead.</li><li><strong><code>return_history = true</code></strong>: Built-in convergence tracking (<code>IterativeHistory</code>) logging residual norms and early stopping criteria.</li><li><strong><code>measure_quality</code> &amp; <code>crop_cbct!</code></strong>: Quantitative evaluation (PSNR, SSIM, RMSE, NCC) within cylindrical FOV.</li></ul><h2 id="Prerequisites"><a class="docs-heading-anchor" href="#Prerequisites">Prerequisites</a><a id="Prerequisites-1"></a><a class="docs-heading-anchor-permalink" href="#Prerequisites" title="Permalink"></a></h2><p>This tutorial uses <strong>Makie</strong> (recommended backend: <strong>CairoMakie</strong>) for visualization. If <code>CairoMakie</code> is not installed in your environment, add it by running <code>using Pkg; Pkg.add(&quot;CairoMakie&quot;)</code>.</p><pre><code class="language-julia hljs">using LinearAlgebra
+using Printf
+using Random
+using CairoMakie
+using Tigre</code></pre><h2 id="1.-Geometry-Setup-and-Ground-Truth-Phantom"><a class="docs-heading-anchor" href="#1.-Geometry-Setup-and-Ground-Truth-Phantom">1. Geometry Setup &amp; Ground Truth Phantom</a><a id="1.-Geometry-Setup-and-Ground-Truth-Phantom-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Geometry-Setup-and-Ground-Truth-Phantom" title="Permalink"></a></h2><p>We set up a realistic 3D Cone-Beam geometry with 100 projection angles covering a full <span>$360^\circ$</span> rotation, simulating an industrial micro-CT or clinical CBCT scanner. We then generate a 3D Shepp-Logan phantom and compute forward projections <code>b = Ax(x)</code> with realistic CT noise (Poisson photon quantum noise and Gaussian electronic readout noise).</p><pre><code class="language-julia hljs">nangles = 100
+angles = LinRange(0f0, 2f0 * Float32(pi), nangles + 1)[1:end-1] |&gt; collect
+
+geo = Geometry(
+    mode = :cone,
+    angles = angles,
+    nVoxel = (256, 256, 256),
+    sVoxel = (256f0, 256f0, 256f0),
+    nDetector = (320, 320),
+    sDetector = (480f0, 480f0),
+    DSO = 1000f0,
+    DSD = 1500f0
+)
+
+# Generate Shepp-Logan 3D volume
+phantom = shepp_logan_3d(geo.nVoxel)
+
+# Clean forward projection
+proj_clean = Ax(phantom, geo)
+
+# Add realistic CT noise (I0 = 100,000 incident photons per detector pixel)
+proj_noisy = add_ct_noise(proj_clean; I0 = 100000.0, gaussian = (0f0, 0.5f0), rng = MersenneTwister(42))
+
+# Analytical FDK baseline for comparison
+rec_fdk = crop_cbct!(fdk(proj_noisy, geo; filter = :hann), geo)
+
+println(&quot;Geometry &amp; data generated:&quot;)
+println(&quot;  Volume size:     &quot;, volume_size(geo))
+println(&quot;  Projection size: &quot;, projection_size(geo))
+println(&quot;  Projections:     &quot;, length(angles), &quot; views&quot;)
+</code></pre><pre><code class="language-text hljs">Geometry &amp; data generated:
+  Volume size:     (256, 256, 256)
+  Projection size: (320, 320, 100)
+  Projections:     100 views</code></pre><h2 id="2.-Zero-Allocation-High-Throughput:-prepare_krylov_workspace"><a class="docs-heading-anchor" href="#2.-Zero-Allocation-High-Throughput:-prepare_krylov_workspace">2. Zero-Allocation High-Throughput: <code>prepare_krylov_workspace</code></a><a id="2.-Zero-Allocation-High-Throughput:-prepare_krylov_workspace-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Zero-Allocation-High-Throughput:-prepare_krylov_workspace" title="Permalink"></a></h2><p>Each iteration of a Krylov solver requires evaluating matrix-vector products <span>$A p$</span> and <span>$A^T r$</span>, maintaining direction vectors, and storing intermediate volume/projection buffers.</p><p>In high-performance production pipelines (e.g. 4D dynamic CT or batch manufacturing inspection), repeatedly allocating these 3D arrays introduces substantial memory churn and garbage collection pauses.</p><p><strong>Tigre.jl</strong> provides <code>prepare_krylov_workspace(geo; maxiter)</code>:</p><ul><li>Preallocates all necessary volume and projection temporary arrays.</li><li>Preallocates the Krylov subspace basis matrices when running subspace-expanded solvers like <code>hybrid_lsqr</code>.</li><li>Can be reused across multiple reconstruction runs, time steps, or algorithm comparisons.</li></ul><pre><code class="language-julia hljs"># Preallocate Krylov workspace for up to 15 iterations
+max_iter = 10
+ws = prepare_krylov_workspace(geo; maxiter = max_iter)
+
+println(&quot;KrylovWorkspace allocated:&quot;)
+println(&quot;  Projection buffer shape: &quot;, size(ws.proj_a))
+println(&quot;  Volume buffer shape:     &quot;, size(ws.vol_a))
+println(&quot;  Subspace basis size:     &quot;, ws.subspace !== nothing ? size(ws.subspace.vol_basis) : &quot;none&quot;)
+</code></pre><pre><code class="language-text hljs">KrylovWorkspace allocated:
+  Projection buffer shape: (320, 320, 100)
+  Volume buffer shape:     (256, 256, 256)
+  Subspace basis size:     (11, 16777216)</code></pre><h2 id="3.-Benchmarking-Krylov-Solvers-with-History-Tracking"><a class="docs-heading-anchor" href="#3.-Benchmarking-Krylov-Solvers-with-History-Tracking">3. Benchmarking Krylov Solvers with History Tracking</a><a id="3.-Benchmarking-Krylov-Solvers-with-History-Tracking-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Benchmarking-Krylov-Solvers-with-History-Tracking" title="Permalink"></a></h2><p>We now benchmark 5 Krylov subspace algorithms using the preallocated workspace <code>ws</code> and logging full convergence histories via <code>return_history = true</code>:</p><ol><li><strong>CGLS</strong>: Standard Conjugate Gradient for Least Squares</li><li><strong>LSQR</strong>: Golub-Kahan bidiagonalization with superior conditioning</li><li><strong>LSMR</strong>: Minimal residual on normal equations with monotonic residual decrease</li><li><strong>Hybrid-LSQR</strong>: Projected Tikhonov regularization in the Krylov subspace (<span>$\lambda = 0.5$</span>)</li><li><strong>AB-GMRES</strong>: Range-space Generalized Minimal Residual solver</li></ol><pre><code class="language-julia hljs">niter = 10
+
+println(&quot;--&gt; Running CGLS...&quot;)
+t_cgls = @timed cgls(proj_noisy, geo, niter; return_history = true, workspace = ws)
+rec_cgls, hist_cgls = t_cgls.value
+crop_cbct!(rec_cgls, geo)
+
+println(&quot;--&gt; Running LSQR...&quot;)
+t_lsqr = @timed lsqr(proj_noisy, geo, niter; return_history = true, workspace = ws)
+rec_lsqr, hist_lsqr = t_lsqr.value
+crop_cbct!(rec_lsqr, geo)
+
+println(&quot;--&gt; Running LSMR...&quot;)
+t_lsmr = @timed lsmr(proj_noisy, geo, niter; return_history = true, workspace = ws)
+rec_lsmr, hist_lsmr = t_lsmr.value
+crop_cbct!(rec_lsmr, geo)
+
+println(&quot;--&gt; Running Hybrid-LSQR (lambda = 0.5)...&quot;)
+t_hybrid = @timed hybrid_lsqr(proj_noisy, geo, niter; lambda = 0.5f0, return_history = true, workspace = ws)
+rec_hybrid, hist_hybrid = t_hybrid.value
+crop_cbct!(rec_hybrid, geo)
+
+println(&quot;--&gt; Running AB-GMRES...&quot;)
+t_ab = @timed ab_gmres(proj_noisy, geo, niter; return_history = true, workspace = ws)
+rec_ab, hist_ab = t_ab.value
+crop_cbct!(rec_ab, geo)
+
+@printf(&quot;All solvers completed:\n&quot;)
+@printf(&quot;  CGLS:        %.3f s, final residual = %.2f\n&quot;, t_cgls.time, hist_cgls.residual_l2[end])
+@printf(&quot;  LSQR:        %.3f s, final residual = %.2f\n&quot;, t_lsqr.time, hist_lsqr.residual_l2[end])
+@printf(&quot;  LSMR:        %.3f s, final residual = %.2f\n&quot;, t_lsmr.time, hist_lsmr.residual_l2[end])
+@printf(&quot;  Hybrid-LSQR: %.3f s, final residual = %.2f\n&quot;, t_hybrid.time, hist_hybrid.residual_l2[end])
+@printf(&quot;  AB-GMRES:    %.3f s, final residual = %.2f\n&quot;, t_ab.time, hist_ab.residual_l2[end])
+</code></pre><pre><code class="language-text hljs">--&gt; Running CGLS...
+--&gt; Running LSQR...
+--&gt; Running LSMR...
+--&gt; Running Hybrid-LSQR (lambda = 0.5)...
+--&gt; Running AB-GMRES...
+All solvers completed:
+  CGLS:        4.223 s, final residual = 3033.92
+  LSQR:        2.278 s, final residual = 3097.99
+  LSMR:        3.296 s, final residual = 3659.87
+  Hybrid-LSQR: 13.313 s, final residual = 3034.01
+  AB-GMRES:    9.705 s, final residual = 3032.40</code></pre><h2 id="4.-Quantitative-Convergence-and-Residual-Evolution"><a class="docs-heading-anchor" href="#4.-Quantitative-Convergence-and-Residual-Evolution">4. Quantitative Convergence &amp; Residual Evolution</a><a id="4.-Quantitative-Convergence-and-Residual-Evolution-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Quantitative-Convergence-and-Residual-Evolution" title="Permalink"></a></h2><p>We inspect the logged <code>residual_l2</code> history from each solver. Notice the difference in convergence profiles:</p><ul><li><strong>LSMR</strong> minimizes <span>$\|A^T (A x - b)\|_2$</span>, providing a smooth, strictly decreasing descent.</li><li><strong>CGLS / LSQR</strong> minimize <span>$\|A x - b\|_2$</span> across expanding search directions.</li><li><strong>Hybrid-LSQR</strong> applies subspace regularization, preventing noise over-fitting in later iterations.</li></ul><pre><code class="language-julia hljs">iters = 1:niter
+
+fig = Figure(size = (800, 420))
+ax = Axis(fig[1, 1], title = &quot;Krylov Subspace Convergence Comparison&quot;,
+          xlabel = &quot;Iteration&quot;, ylabel = &quot;Residual L2 Norm&quot;, yscale = log10)
+scatterlines!(ax, iters, hist_cgls.residual_l2, label = &quot;CGLS&quot;, color = :blue, linewidth = 2.5)
+lines!(ax, iters, hist_lsqr.residual_l2, label = &quot;LSQR&quot;, color = :cyan, linewidth = 2, linestyle = :dash)
+scatterlines!(ax, iters, hist_lsmr.residual_l2, label = &quot;LSMR&quot;, color = :green, marker = :diamond, linewidth = 2.5)
+scatterlines!(ax, iters, hist_hybrid.residual_l2, label = &quot;Hybrid-LSQR&quot;, color = :purple, marker = :rect, linewidth = 2.5)
+lines!(ax, iters, hist_ab.residual_l2, label = &quot;AB-GMRES&quot;, color = :orange, linewidth = 2, linestyle = :dot)
+axislegend(ax, position = :rt)
+fig</code></pre><p><img src="../../assets/tutorials/06_krylov_solvers_01.png" alt/></p><h2 id="5.-Image-Quality-Assessment-and-Visual-Slice-Inspection"><a class="docs-heading-anchor" href="#5.-Image-Quality-Assessment-and-Visual-Slice-Inspection">5. Image Quality Assessment &amp; Visual Slice Inspection</a><a id="5.-Image-Quality-Assessment-and-Visual-Slice-Inspection-1"></a><a class="docs-heading-anchor-permalink" href="#5.-Image-Quality-Assessment-and-Visual-Slice-Inspection" title="Permalink"></a></h2><p>We evaluate reconstruction accuracy against the ground truth phantom using <code>measure_quality</code>:</p><ul><li><strong>PSNR</strong> (Peak Signal-to-Noise Ratio): higher is better.</li><li><strong>SSIM</strong> (Structural Similarity Index): closer to 1.0 is better.</li><li><strong>RMSE</strong> (Root Mean Square Error): lower is better.</li><li><strong>NCC</strong> (Normalized Cross Correlation): closer to 1.0 is better.</li></ul><pre><code class="language-julia hljs">models = [
+    (&quot;FDK (Hann)&quot;, rec_fdk),
+    (&quot;CGLS&quot;, rec_cgls),
+    (&quot;LSQR&quot;, rec_lsqr),
+    (&quot;LSMR&quot;, rec_lsmr),
+    (&quot;Hybrid-LSQR&quot;, rec_hybrid),
+    (&quot;AB-GMRES&quot;, rec_ab)
+]
+
+println(&quot;=&quot; ^ 68)
+@printf(&quot;%-14s | %-8s | %-8s | %-8s | %-8s\n&quot;, &quot;Algorithm&quot;, &quot;PSNR (dB)&quot;, &quot;SSIM&quot;, &quot;RMSE&quot;, &quot;NCC&quot;)
+println(&quot;-&quot; ^ 68)
+for (name, rec) in models
+    q = measure_quality(phantom, rec)
+    @printf(&quot;%-14s | %8.2f | %8.4f | %8.4f | %8.4f\n&quot;, name, q.psnr, q.ssim, q.rmse, q.ncc)
+end
+println(&quot;=&quot; ^ 68)
+</code></pre><pre><code class="language-text hljs">====================================================================
+Algorithm      | PSNR (dB) | SSIM     | RMSE     | NCC     
+--------------------------------------------------------------------
+FDK (Hann)     |    28.28 |   0.9578 |   0.0541 |   0.9599
+CGLS           |    27.97 |   0.9435 |   0.0621 |   0.9468
+LSQR           |    28.05 |   0.9443 |   0.0618 |   0.9472
+LSMR           |    26.51 |   0.9255 |   0.0695 |   0.9352
+Hybrid-LSQR    |    28.09 |   0.9445 |   0.0617 |   0.9473
+AB-GMRES       |    28.03 |   0.9441 |   0.0619 |   0.9471
+====================================================================</code></pre><pre><code class="language-julia hljs">mid_z = 3 * size(phantom, 3) ÷ 8
+clims = (0.0f0, 1.0f0)
+titles = [&quot;Ground Truth&quot;, &quot;FDK (Hann)&quot;, &quot;CGLS (10 iter)&quot;, &quot;LSMR (10 iter)&quot;, &quot;Hybrid-LSQR&quot;, &quot;AB-GMRES&quot;]
+imgs = [phantom, rec_fdk, rec_cgls, rec_lsmr, rec_hybrid, rec_ab]
+
+fig = Figure(size = (900, 600))
+for (idx, (t, vol)) in enumerate(zip(titles, imgs))
+    row = (idx - 1) ÷ 3 + 1
+    col = (idx - 1) % 3 + 1
+    ax = Axis(fig[row, col], title = t, aspect = DataAspect())
+    hidedecorations!(ax)
+    heatmap!(ax, vol[:, :, mid_z], colormap = :grays, colorrange = clims)
+end
+fig</code></pre><p><img src="../../assets/tutorials/06_krylov_solvers_02.png" alt/></p><h2 id="6.-High-Contrast-Line-Profile-Analysis"><a class="docs-heading-anchor" href="#6.-High-Contrast-Line-Profile-Analysis">6. High-Contrast Line Profile Analysis</a><a id="6.-High-Contrast-Line-Profile-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#6.-High-Contrast-Line-Profile-Analysis" title="Permalink"></a></h2><p>To evaluate edge sharpness and noise suppression across different tissue boundaries, we extract a 1D horizontal profile traversing the inner high-contrast features of the Shepp-Logan phantom.</p><pre><code class="language-julia hljs">y_idx = round(Int, size(phantom, 1) * 0.62)  # Cut through inner high-contrast inserts
+x_coords = 1:size(phantom, 2)
+
+fig = Figure(size = (800, 380))
+ax = Axis(fig[1, 1], title = &quot;Horizontal Line Profile Comparison (Z=$mid_z)&quot;,
+          xlabel = &quot;Voxel X Index&quot;, ylabel = &quot;Attenuation Coefficient&quot;)
+lines!(ax, x_coords, phantom[:, y_idx, mid_z], label = &quot;Ground Truth&quot;, linewidth = 3, color = :black)
+lines!(ax, x_coords, rec_fdk[:, y_idx, mid_z], label = &quot;FDK&quot;, linewidth = 1.5, linestyle = :dash, color = :red)
+lines!(ax, x_coords, rec_cgls[:, y_idx, mid_z], label = &quot;CGLS&quot;, linewidth = 2, color = :blue)
+lines!(ax, x_coords, rec_lsmr[:, y_idx, mid_z], label = &quot;LSMR&quot;, linewidth = 2, color = :green)
+lines!(ax, x_coords, rec_hybrid[:, y_idx, mid_z], label = &quot;Hybrid-LSQR&quot;, linewidth = 2.5, color = :purple)
+axislegend(ax, position = :lt)
+fig</code></pre><p><img src="../../assets/tutorials/06_krylov_solvers_03.png" alt/></p><h2 id="7.-Summary-and-Krylov-Solver-Selection-Guide"><a class="docs-heading-anchor" href="#7.-Summary-and-Krylov-Solver-Selection-Guide">7. Summary &amp; Krylov Solver Selection Guide</a><a id="7.-Summary-and-Krylov-Solver-Selection-Guide-1"></a><a class="docs-heading-anchor-permalink" href="#7.-Summary-and-Krylov-Solver-Selection-Guide" title="Permalink"></a></h2><table><tr><th style="text-align: left">Algorithm</th><th style="text-align: left">Governing Equation</th><th style="text-align: left">Primary Strength</th><th style="text-align: left">Recommended Use Case</th></tr><tr><td style="text-align: left"><strong>CGLS</strong></td><td style="text-align: left"><span>$A^T A x = A^T b$</span></td><td style="text-align: left">Fast per-iteration time, rapid initial convergence</td><td style="text-align: left">Well-conditioned problems with sufficient angular sampling</td></tr><tr><td style="text-align: left"><strong>LSQR</strong></td><td style="text-align: left"><span>$A x \approx b$</span> via bidiagonalization</td><td style="text-align: left">High numerical stability, robust against ill-conditioning</td><td style="text-align: left">Ill-conditioned CT geometries, low magnification</td></tr><tr><td style="text-align: left"><strong>LSMR</strong></td><td style="text-align: left"><span>$\min_x |A^T (A x - b)|_2$</span></td><td style="text-align: left">Monotonic normal equation residual decrease, safe early stopping</td><td style="text-align: left">Automated stopping criteria in production lines</td></tr><tr><td style="text-align: left"><strong>Hybrid-LSQR</strong></td><td style="text-align: left">Projected Krylov Tikhonov</td><td style="text-align: left">Suppresses noise amplification in later iterations</td><td style="text-align: left">Noisy or semi-convergent inverse problems</td></tr><tr><td style="text-align: left"><strong>AB-GMRES</strong></td><td style="text-align: left"><span>$A A^T y = b,\; x = A^T y$</span></td><td style="text-align: left">Range-space projection, minimal residual on projection space</td><td style="text-align: left">Sparse-view or inconsistent measurement data</td></tr></table><h3 id="Performance-Recommendations"><a class="docs-heading-anchor" href="#Performance-Recommendations">Performance Recommendations</a><a id="Performance-Recommendations-1"></a><a class="docs-heading-anchor-permalink" href="#Performance-Recommendations" title="Permalink"></a></h3><ol><li>Always reuse preallocated workspace using <code>prepare_krylov_workspace(geo; maxiter)</code> when reconstructing sequences of CT slices or temporal volumes.</li><li>Use <code>return_history = true</code> during prototyping to inspect the convergence plateau before deploying fixed-iteration production runs.</li><li>Apply <code>crop_cbct!</code> to remove unilluminated corner voxels outside the cylindrical FOV prior to quantitative quality measurement.</li></ol></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../05_iterative_comparison/">« 05: Iterative Algorithms Comparison</a><a class="docs-footer-nextpage" href="../07_preprocessing/">07: Projection Preprocessing &amp; COR »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Saturday 10 October 2026 07:37">Saturday 10 October 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

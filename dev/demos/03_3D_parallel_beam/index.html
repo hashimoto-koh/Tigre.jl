@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>03: 3D Parallel-Beam · Tigre.jl</title><meta name="title" content="03: 3D Parallel-Beam · Tigre.jl"/><meta property="og:title" content="03: 3D Parallel-Beam · Tigre.jl"/><meta property="twitter:title" content="03: 3D Parallel-Beam · Tigre.jl"/><meta name="description" content="Documentation for Tigre.jl."/><meta property="og:description" content="Documentation for Tigre.jl."/><meta property="twitter:description" content="Documentation for Tigre.jl."/><meta property="og:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/03_3D_parallel_beam/"/><meta property="twitter:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/03_3D_parallel_beam/"/><link rel="canonical" href="https://hashimoto-koh.github.io/Tigre.jl/demos/03_3D_parallel_beam/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Tigre.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../about_tigre/">About TIGRE &amp; Upstream</a></li><li><a class="tocitem" href="../../quickstart/">Quick Start</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li><li><a class="tocitem" href="../../geometry/">Geometry Specification</a></li><li><a class="tocitem" href="../../operators/">Operators &amp; Weights</a></li><li><a class="tocitem" href="../../algorithms/">Algorithms</a></li><li><a class="tocitem" href="../../workspace_reuse/">Workspace &amp; Plan Reuse</a></li><li><a class="tocitem" href="../../phantoms/">Phantoms</a></li><li><span class="tocitem">Demonstrations</span><ul><li><a class="tocitem" href="../01_2D_parallel_beam/">01: 2D Parallel-Beam</a></li><li><a class="tocitem" href="../02_2D_cone_beam/">02: 2D Cone-Beam (Fan-Beam)</a></li><li class="is-active"><a class="tocitem" href>03: 3D Parallel-Beam</a><ul class="internal"><li><a class="tocitem" href="#Prerequisites"><span>Prerequisites</span></a></li><li><a class="tocitem" href="#1.-3D-Volumetric-Phantom-Generation-(Built-in-shepp_logan_3d)"><span>1. 3D Volumetric Phantom Generation (Built-in <code>shepp_logan_3d</code>)</span></a></li><li><a class="tocitem" href="#2.-3D-Parallel-Beam-Geometry-Setup"><span>2. 3D Parallel-Beam Geometry Setup</span></a></li><li><a class="tocitem" href="#3.-3D-Forward-Projection-(Ax)"><span>3. 3D Forward Projection (<code>Ax</code>)</span></a></li><li><a class="tocitem" href="#4.-Direct-3D-Reconstruction-with-FBP-(fbp)"><span>4. Direct 3D Reconstruction with FBP (<code>fbp</code>)</span></a></li><li><a class="tocitem" href="#5.-Iterative-3D-Reconstruction-with-FISTA-(fista)"><span>5. Iterative 3D Reconstruction with FISTA (<code>fista</code>)</span></a></li><li><a class="tocitem" href="#6.-Multi-Planar-Orthogonal-Views"><span>6. Multi-Planar Orthogonal Views</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../04_3D_cone_beam/">04: 3D Cone-Beam (CBCT)</a></li><li><a class="tocitem" href="../05_iterative_comparison/">05: Iterative Algorithms Comparison</a></li><li><a class="tocitem" href="../06_krylov_solvers/">06: Krylov Subspace Solvers</a></li><li><a class="tocitem" href="../07_preprocessing/">07: Projection Preprocessing &amp; COR</a></li><li><a class="tocitem" href="../08_offset_detector_fov/">08: Offset Detector &amp; Extended FOV</a></li><li><a class="tocitem" href="../09_laminography_conebeam/">09: Computed Laminography (CBCL)</a></li><li><a class="tocitem" href="../10_emission_mlem_osem/">10: Emission Tomography (PET/SPECT)</a></li><li><a class="tocitem" href="../11_low_dose_regularization/">11: Low-Dose CT &amp; Regularization</a></li><li><a class="tocitem" href="../12_sparse_view_cs/">12: Sparse-View CT &amp; Compressed Sensing</a></li><li><a class="tocitem" href="../13_workspace_reuse/">13: Workspace &amp; Plan Reuse</a></li></ul></li><li><a class="tocitem" href="../../visualization/">Visualization</a></li><li><a class="tocitem" href="../../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Demonstrations</a></li><li class="is-active"><a href>03: 3D Parallel-Beam</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>03: 3D Parallel-Beam</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl/blob/master/docs/src/demos/03_3D_parallel_beam.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="3D-Parallel-Beam-CT-Demo-with-Tigre.jl"><a class="docs-heading-anchor" href="#3D-Parallel-Beam-CT-Demo-with-Tigre.jl">3D Parallel-Beam CT Demo with Tigre.jl</a><a id="3D-Parallel-Beam-CT-Demo-with-Tigre.jl-1"></a><a class="docs-heading-anchor-permalink" href="#3D-Parallel-Beam-CT-Demo-with-Tigre.jl" title="Permalink"></a></h1><p>This tutorial demonstrates a complete 3D volumetric parallel-beam CT workflow (representative of synchrotron micro-CT beamlines):</p><ol><li>Generating a 3D Shepp-Logan volume using <strong>Tigre.jl</strong>&#39;s built-in <code>shepp_logan_3d</code>.</li><li>Configuring a 3D parallel-beam <strong>Geometry</strong> in <strong>Tigre.jl</strong>.</li><li>Simulating 3D forward projection onto a 2D planar detector using <code>Ax</code>.</li><li>Performing volumetric reconstruction using 3D Parallel Filtered Backprojection (<code>fbp</code>).</li><li>Performing 3D iterative reconstruction using <code>fista</code> with 3D Total Variation (TV) regularization.</li><li>Multi-planar visualization across axial, coronal, and sagittal orthogonal planes.</li></ol><hr/><h3 id="Relevant-Functions-Used"><a class="docs-heading-anchor" href="#Relevant-Functions-Used">Relevant Functions Used</a><a id="Relevant-Functions-Used-1"></a><a class="docs-heading-anchor-permalink" href="#Relevant-Functions-Used" title="Permalink"></a></h3><ul><li><code>Tigre.shepp_logan_3d</code>: Generates analytical 3D Shepp-Logan volumetric phantom.</li><li><code>Tigre.Geometry</code>: Sets up 3D parallel-beam acquisition geometry.</li><li><code>Tigre.Ax</code>: Computes 3D forward projection through voxel volume onto 2D detector array.</li><li><code>Tigre.fbp</code>: 3D parallel-beam filtered backprojection.</li><li><code>Tigre.fista</code>: Accelerated 3D proximal gradient reconstruction with 3D TV regularizer.</li></ul><h2 id="Prerequisites"><a class="docs-heading-anchor" href="#Prerequisites">Prerequisites</a><a id="Prerequisites-1"></a><a class="docs-heading-anchor-permalink" href="#Prerequisites" title="Permalink"></a></h2><p>This tutorial uses <strong>Makie</strong> (recommended backend: <strong>CairoMakie</strong>) for visualization. If <code>CairoMakie</code> is not installed in your environment, add it by running <code>using Pkg; Pkg.add(&quot;CairoMakie&quot;)</code>.</p><pre><code class="language-julia hljs">using LinearAlgebra
+using CairoMakie
+using Tigre</code></pre><h2 id="1.-3D-Volumetric-Phantom-Generation-(Built-in-shepp_logan_3d)"><a class="docs-heading-anchor" href="#1.-3D-Volumetric-Phantom-Generation-(Built-in-shepp_logan_3d)">1. 3D Volumetric Phantom Generation (Built-in <code>shepp_logan_3d</code>)</a><a id="1.-3D-Volumetric-Phantom-Generation-(Built-in-shepp_logan_3d)-1"></a><a class="docs-heading-anchor-permalink" href="#1.-3D-Volumetric-Phantom-Generation-(Built-in-shepp_logan_3d)" title="Permalink"></a></h2><p>We synthesize a <span>$256 \times 256 \times 256$</span> volumetric Shepp-Logan phantom.</p><pre><code class="language-julia hljs">N = 256
+vol_phantom = shepp_logan_3d(N; phantom_type = :yu_ye_wang)
+
+println(&quot;3D Phantom dimensions: &quot;, size(vol_phantom))
+println(&quot;Value range: [&quot;, minimum(vol_phantom), &quot;, &quot;, maximum(vol_phantom), &quot;]&quot;)
+
+# Visualize axial slice (Z = 3N/8) using plotImg
+mid_z = 3 * N ÷ 8
+plotImg(vol_phantom; dim = :z, slice = mid_z, figure_size = (500, 450))
+</code></pre><pre><code class="language-text hljs">3D Phantom dimensions: (256, 256, 256)
+Value range: [-1.4901161e-8, 1.0]</code></pre><p><img src="../../assets/tutorials/03_3D_parallel_beam_01.png" alt/></p><h2 id="2.-3D-Parallel-Beam-Geometry-Setup"><a class="docs-heading-anchor" href="#2.-3D-Parallel-Beam-Geometry-Setup">2. 3D Parallel-Beam Geometry Setup</a><a id="2.-3D-Parallel-Beam-Geometry-Setup-1"></a><a class="docs-heading-anchor-permalink" href="#2.-3D-Parallel-Beam-Geometry-Setup" title="Permalink"></a></h2><p>In 3D parallel-beam CT:</p><ul><li>Each detector row corresponds to an independent parallel slice projection.</li><li><code>angles</code>: 180 projection angles spanning <span>$[0, \pi]$</span> radians (180 degrees).</li><li><code>nDetector = (nDetU, nDetV)</code>: 2D detector pixel grid.</li><li><code>DSO = DSD = 1000f0</code>: Distance values are identical for parallel-beam geometry.</li></ul><pre><code class="language-julia hljs">n_angles = 180
+angles = Float32.(range(0, pi, length=n_angles))
+
+n_det = 384
+geo = Geometry(
+    mode = :parallel,
+    angles = angles,
+    nVoxel = (N, N, N),
+    sVoxel = (Float32(N), Float32(N), Float32(N)),
+    nDetector = (n_det, n_det),
+    sDetector = (Float32(n_det), Float32(n_det)),
+    DSO = 1000.0f0,
+    DSD = 1000.0f0,
+)
+
+println(&quot;3D Parallel Geometry:&quot;)
+println(&quot;  Volume size:     &quot;, volume_size(geo))
+println(&quot;  Projection size: &quot;, projection_size(geo))
+</code></pre><pre><code class="language-text hljs">3D Parallel Geometry:
+  Volume size:     (256, 256, 256)
+  Projection size: (384, 384, 180)</code></pre><h2 id="3.-3D-Forward-Projection-(Ax)"><a class="docs-heading-anchor" href="#3.-3D-Forward-Projection-(Ax)">3. 3D Forward Projection (<code>Ax</code>)</a><a id="3.-3D-Forward-Projection-(Ax)-1"></a><a class="docs-heading-anchor-permalink" href="#3.-3D-Forward-Projection-(Ax)" title="Permalink"></a></h2><p><code>Ax</code> simulates projection through the 3D volume, producing an array of size <code>(nDetU, nDetV, nAngles)</code>.</p><pre><code class="language-julia hljs">projections = Ax(vol_phantom, geo)
+println(&quot;Projections size (U x V x Angles): &quot;, size(projections))
+
+# Display projection radiograph at gantry angle 0° using plotProj
+plotProj(projections, angles; slice = 1, figure_size = (600, 450))
+</code></pre><pre><code class="language-text hljs">Projections size (U x V x Angles): (384, 384, 180)</code></pre><p><img src="../../assets/tutorials/03_3D_parallel_beam_02.png" alt/></p><h2 id="4.-Direct-3D-Reconstruction-with-FBP-(fbp)"><a class="docs-heading-anchor" href="#4.-Direct-3D-Reconstruction-with-FBP-(fbp)">4. Direct 3D Reconstruction with FBP (<code>fbp</code>)</a><a id="4.-Direct-3D-Reconstruction-with-FBP-(fbp)-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Direct-3D-Reconstruction-with-FBP-(fbp)" title="Permalink"></a></h2><p><code>fbp</code> filters each detector slice with a ramp filter and backprojects across all projection angles.</p><pre><code class="language-julia hljs">rec_fbp = fbp(projections, geo; filter = :hann)
+
+fig = Figure(size = (800, 360))
+ax1 = Axis(fig[1, 1], title = &quot;FBP Axial (Z=$mid_z)&quot;, aspect = DataAspect())
+hm1 = heatmap!(ax1, rec_fbp[:, :, mid_z], colormap = :grays)
+Colorbar(fig[1, 2], hm1)
+
+ax2 = Axis(fig[1, 3], title = &quot;|FBP - Truth|&quot;, aspect = DataAspect())
+hm2 = heatmap!(ax2, abs.(rec_fbp[:, :, mid_z] .- vol_phantom[:, :, mid_z]), colormap = :hot)
+Colorbar(fig[1, 4], hm2)
+fig</code></pre><p><img src="../../assets/tutorials/03_3D_parallel_beam_03.png" alt/></p><h2 id="5.-Iterative-3D-Reconstruction-with-FISTA-(fista)"><a class="docs-heading-anchor" href="#5.-Iterative-3D-Reconstruction-with-FISTA-(fista)">5. Iterative 3D Reconstruction with FISTA (<code>fista</code>)</a><a id="5.-Iterative-3D-Reconstruction-with-FISTA-(fista)-1"></a><a class="docs-heading-anchor-permalink" href="#5.-Iterative-3D-Reconstruction-with-FISTA-(fista)" title="Permalink"></a></h2><p>FISTA applies 3D Total Variation denoising (<code>tviter = 5</code>, <code>tvlambda = 0.05f0</code>) across all three spatial dimensions.</p><pre><code class="language-julia hljs"># =============================================================================
+# Estimation of FISTA Lipschitz Hyperparameter (`hyper`)
+#
+# FISTA (Fast Iterative Shrinkage-Thresholding Algorithm) relies on proximal gradient descent.
+# Its gradient step size is proportional to 1 / hyper, where hyper represents the Lipschitz
+# constant L ≈ ||Aᵀ A||₂ (the spectral radius of the forward-backward projection operator).
+#
+# If `hyper` is left to the default fallback value, the gradient step size can be drastically
+# mismatched (e.g. orders of magnitude too conservative), leading to poor reconstruction quality
+# and near-zero convergence.
+#
+# We explicitly estimate `fista_hyper` beforehand using the SVD power method via `estimate_hyper(geo)`.
+# Storing it in an explicit variable before calling `fista` makes the parameter calibration step
+# transparent and easily verifiable, emphasizing the critical importance of proper operator norm scaling.
+# =============================================================================
+fista_hyper = estimate_hyper(geo)
+println(&quot;Estimated FISTA Lipschitz hyperparameter: &quot;, fista_hyper)
+</code></pre><pre><code class="language-text hljs">Estimated FISTA Lipschitz hyperparameter: 93445.61</code></pre><pre><code class="language-julia hljs">niter = 40
+rec_fista, hist = fista(
+    projections,
+    geo,
+    niter;
+    hyper = fista_hyper,
+    tviter = 5,
+    tvlambda = 0.05f0,
+    nonneg = true,
+    return_history = true,
+    compute_l2 = true,
+)
+
+fig = Figure(size = (800, 360))
+ax1 = Axis(fig[1, 1], title = &quot;FISTA Axial (Z=$mid_z)&quot;, aspect = DataAspect())
+hm1 = heatmap!(ax1, rec_fista[:, :, mid_z], colormap = :grays)
+Colorbar(fig[1, 2], hm1)
+
+ax2 = Axis(fig[1, 3], title = &quot;FISTA 3D Convergence&quot;, xlabel = &quot;Iteration&quot;, ylabel = &quot;Residual L2&quot;)
+scatterlines!(ax2, 1:length(hist.residual_l2), hist.residual_l2, color = :blue)
+fig</code></pre><p><img src="../../assets/tutorials/03_3D_parallel_beam_04.png" alt/></p><h2 id="6.-Multi-Planar-Orthogonal-Views"><a class="docs-heading-anchor" href="#6.-Multi-Planar-Orthogonal-Views">6. Multi-Planar Orthogonal Views</a><a id="6.-Multi-Planar-Orthogonal-Views-1"></a><a class="docs-heading-anchor-permalink" href="#6.-Multi-Planar-Orthogonal-Views" title="Permalink"></a></h2><p>We inspect the 3D volume along the three canonical orthogonal cross-sections:</p><ul><li><strong>Axial</strong> (<span>$XY$</span> plane)</li><li><strong>Coronal</strong> (<span>$XZ$</span> plane)</li><li><strong>Sagittal</strong> (<span>$YZ$</span> plane)</li></ul><pre><code class="language-julia hljs">mid_x = N ÷ 2
+mid_y = N ÷ 2
+
+# Ground truth views
+fig = Figure(size = (900, 300))
+ax1 = Axis(fig[1, 1], title = &quot;Truth Axial&quot;, aspect = DataAspect())
+heatmap!(ax1, vol_phantom[:, :, mid_z], colormap = :grays)
+
+ax2 = Axis(fig[1, 2], title = &quot;Truth Coronal&quot;, aspect = DataAspect())
+heatmap!(ax2, vol_phantom[:, mid_y, :]&#39;, colormap = :grays)
+
+ax3 = Axis(fig[1, 3], title = &quot;Truth Sagittal&quot;, aspect = DataAspect())
+heatmap!(ax3, vol_phantom[mid_x, :, :]&#39;, colormap = :grays)
+fig</code></pre><p><img src="../../assets/tutorials/03_3D_parallel_beam_05.png" alt/></p><pre><code class="language-julia hljs"># FISTA reconstructed views
+fig = Figure(size = (900, 300))
+ax1 = Axis(fig[1, 1], title = &quot;FISTA Axial&quot;, aspect = DataAspect())
+heatmap!(ax1, rec_fista[:, :, mid_z], colormap = :grays)
+
+ax2 = Axis(fig[1, 2], title = &quot;FISTA Coronal&quot;, aspect = DataAspect())
+heatmap!(ax2, rec_fista[:, mid_y, :]&#39;, colormap = :grays)
+
+ax3 = Axis(fig[1, 3], title = &quot;FISTA Sagittal&quot;, aspect = DataAspect())
+heatmap!(ax3, rec_fista[mid_x, :, :]&#39;, colormap = :grays)
+fig</code></pre><p><img src="../../assets/tutorials/03_3D_parallel_beam_06.png" alt/></p><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><ul><li>In 3D parallel-beam geometry, <code>Tigre.jl</code> provides fast volumetric projection and backprojection.</li><li>FISTA with 3D TV regularization enforces spatial consistency across adjacent slices, effectively suppressing noise and ringing.</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../02_2D_cone_beam/">« 02: 2D Cone-Beam (Fan-Beam)</a><a class="docs-footer-nextpage" href="../04_3D_cone_beam/">04: 3D Cone-Beam (CBCT) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Saturday 10 October 2026 07:37">Saturday 10 October 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

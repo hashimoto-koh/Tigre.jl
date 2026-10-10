@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>09: Computed Laminography (CBCL) · Tigre.jl</title><meta name="title" content="09: Computed Laminography (CBCL) · Tigre.jl"/><meta property="og:title" content="09: Computed Laminography (CBCL) · Tigre.jl"/><meta property="twitter:title" content="09: Computed Laminography (CBCL) · Tigre.jl"/><meta name="description" content="Documentation for Tigre.jl."/><meta property="og:description" content="Documentation for Tigre.jl."/><meta property="twitter:description" content="Documentation for Tigre.jl."/><meta property="og:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/09_laminography_conebeam/"/><meta property="twitter:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/09_laminography_conebeam/"/><link rel="canonical" href="https://hashimoto-koh.github.io/Tigre.jl/demos/09_laminography_conebeam/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Tigre.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../about_tigre/">About TIGRE &amp; Upstream</a></li><li><a class="tocitem" href="../../quickstart/">Quick Start</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li><li><a class="tocitem" href="../../geometry/">Geometry Specification</a></li><li><a class="tocitem" href="../../operators/">Operators &amp; Weights</a></li><li><a class="tocitem" href="../../algorithms/">Algorithms</a></li><li><a class="tocitem" href="../../workspace_reuse/">Workspace &amp; Plan Reuse</a></li><li><a class="tocitem" href="../../phantoms/">Phantoms</a></li><li><span class="tocitem">Demonstrations</span><ul><li><a class="tocitem" href="../01_2D_parallel_beam/">01: 2D Parallel-Beam</a></li><li><a class="tocitem" href="../02_2D_cone_beam/">02: 2D Cone-Beam (Fan-Beam)</a></li><li><a class="tocitem" href="../03_3D_parallel_beam/">03: 3D Parallel-Beam</a></li><li><a class="tocitem" href="../04_3D_cone_beam/">04: 3D Cone-Beam (CBCT)</a></li><li><a class="tocitem" href="../05_iterative_comparison/">05: Iterative Algorithms Comparison</a></li><li><a class="tocitem" href="../06_krylov_solvers/">06: Krylov Subspace Solvers</a></li><li><a class="tocitem" href="../07_preprocessing/">07: Projection Preprocessing &amp; COR</a></li><li><a class="tocitem" href="../08_offset_detector_fov/">08: Offset Detector &amp; Extended FOV</a></li><li class="is-active"><a class="tocitem" href>09: Computed Laminography (CBCL)</a><ul class="internal"><li><a class="tocitem" href="#1.-Introduction:-Why-Computed-Laminography?"><span>1. Introduction: Why Computed Laminography?</span></a></li><li><a class="tocitem" href="#Prerequisites"><span>Prerequisites</span></a></li><li><a class="tocitem" href="#2.-Laminography-Geometry-Setup-(Z-Y-Z-Euler-Angles)"><span>2. Laminography Geometry Setup (Z-Y-Z Euler Angles)</span></a></li><li><a class="tocitem" href="#3.-Multi-Layer-Planar-Object-(PCB-Simulation)"><span>3. Multi-Layer Planar Object (PCB Simulation)</span></a></li><li><a class="tocitem" href="#4.-Projection-Acquisition-and-Realistic-CT-Noise-Simulation"><span>4. Projection Acquisition &amp; Realistic CT Noise Simulation</span></a></li><li><a class="tocitem" href="#5.-Multi-Algorithm-Reconstruction-Benchmark"><span>5. Multi-Algorithm Reconstruction Benchmark</span></a></li><li><a class="tocitem" href="#6.-Layer-by-Layer-Separation-Analysis-(X-Y-Planes)"><span>6. Layer-by-Layer Separation Analysis (X-Y Planes)</span></a></li><li><a class="tocitem" href="#7.-Out-of-Plane-Depth-Resolution-and-Missing-Cone-Analysis-(X-Z-Slices)"><span>7. Out-of-Plane Depth Resolution &amp; Missing-Cone Analysis (X-Z Slices)</span></a></li><li><a class="tocitem" href="#8.-1D-Depth-Profile-Analysis-Across-Layers"><span>8. 1D Depth Profile Analysis Across Layers</span></a></li><li><a class="tocitem" href="#9.-Summary-and-Laminography-Algorithm-Selection-Guide"><span>9. Summary &amp; Laminography Algorithm Selection Guide</span></a></li></ul></li><li><a class="tocitem" href="../10_emission_mlem_osem/">10: Emission Tomography (PET/SPECT)</a></li><li><a class="tocitem" href="../11_low_dose_regularization/">11: Low-Dose CT &amp; Regularization</a></li><li><a class="tocitem" href="../12_sparse_view_cs/">12: Sparse-View CT &amp; Compressed Sensing</a></li><li><a class="tocitem" href="../13_workspace_reuse/">13: Workspace &amp; Plan Reuse</a></li></ul></li><li><a class="tocitem" href="../../visualization/">Visualization</a></li><li><a class="tocitem" href="../../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Demonstrations</a></li><li class="is-active"><a href>09: Computed Laminography (CBCL)</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>09: Computed Laminography (CBCL)</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl/blob/master/docs/src/demos/09_laminography_conebeam.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Cone-Beam-Computed-Laminography-(CBCL)-in-Tigre.jl"><a class="docs-heading-anchor" href="#Cone-Beam-Computed-Laminography-(CBCL)-in-Tigre.jl">Cone-Beam Computed Laminography (CBCL) in Tigre.jl</a><a id="Cone-Beam-Computed-Laminography-(CBCL)-in-Tigre.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Cone-Beam-Computed-Laminography-(CBCL)-in-Tigre.jl" title="Permalink"></a></h1><h2 id="1.-Introduction:-Why-Computed-Laminography?"><a class="docs-heading-anchor" href="#1.-Introduction:-Why-Computed-Laminography?">1. Introduction: Why Computed Laminography?</a><a id="1.-Introduction:-Why-Computed-Laminography?-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Introduction:-Why-Computed-Laminography?" title="Permalink"></a></h2><p>In non-destructive testing (NDT), quality control of <strong>flat, laterally extended objects</strong>—such as multi-layer Printed Circuit Boards (PCBs), semiconductor ball-grid arrays (BGAs), silicon wafers, and carbon-fiber composite panels—presents a fundamental challenge for conventional Computed Tomography (CT):</p><ul><li>In standard CT, the object rotates around an axis perpendicular to the central beam (<span>$90^\circ$</span>). For a planar plate, rays traversing along the plate&#39;s long lateral dimensions suffer from <strong>extreme photon starvation, beam hardening, and physical gantry collision</strong>.</li><li><strong>Computed Laminography (CL)</strong> solves this by tilting the rotation axis by an inclination angle <span>$\theta$</span> (typically <span>$15^\circ$</span> to <span>$30^\circ$</span> relative to the central beam axis in practical industrial inspection). The X-ray source and flat-panel detector rotate synchronously around this inclined axis, allowing unobstructed penetrative imaging of arbitrarily large planar objects.</li></ul><h3 id="The-&quot;Missing-Cone&quot;-Challenge"><a class="docs-heading-anchor" href="#The-&quot;Missing-Cone&quot;-Challenge">The &quot;Missing Cone&quot; Challenge</a><a id="The-&quot;Missing-Cone&quot;-Challenge-1"></a><a class="docs-heading-anchor-permalink" href="#The-&quot;Missing-Cone&quot;-Challenge" title="Permalink"></a></h3><p>Because the scanning trajectory does not cover a full <span>$4\pi$</span> sphere of projection normals, a cone of spatial frequencies with half-angle <span>$\alpha = 90^\circ - \theta$</span> is missing in Radon/Fourier space along the object&#39;s normal (<span>$Z$</span>-axis):</p><ul><li><strong>FDK (Analytical)</strong> suffers severely from <strong>missing-cone depth blur, layer cross-talk (features bleeding into neighboring depth planes), and vertical streak artifacts</strong>.</li><li><strong>Iterative &amp; Regularized Reconstructions</strong> (SART, SART-TV, AW-ASD-POCS, FISTA, IRN-TV-CGLS) leverage algebraic projection modeling and prior constraints—such as non-negativity and Total Variation (TV) sparsity—to effectively interpolate and restore the missing frequency cone, achieving sharp layer separation and depth resolution.</li></ul><hr/><h3 id="Algorithms-Benchmarked-in-this-Tutorial"><a class="docs-heading-anchor" href="#Algorithms-Benchmarked-in-this-Tutorial">Algorithms Benchmarked in this Tutorial</a><a id="Algorithms-Benchmarked-in-this-Tutorial-1"></a><a class="docs-heading-anchor-permalink" href="#Algorithms-Benchmarked-in-this-Tutorial" title="Permalink"></a></h3><ol><li><strong>FDK (Hann)</strong>: Classical filtered backprojection baseline for inclined geometry.</li><li><strong>CGLS</strong>: Unregularized Krylov conjugate gradient least squares (15 iterations).</li><li><strong>SART</strong>: Classical unregularized Simultaneous Algebraic Reconstruction Technique (12 iterations).</li><li><strong>SART-TV</strong>: SART with Total Variation proximal regularization (12 iterations, <span>$\lambda = 0.5$</span>, tviter = 5, tvlambda = 100).</li><li><strong>AW-ASD-POCS</strong>: Adaptive-Weighted ASD-POCS preserving sharp PCB traces and via contacts (12 iterations).</li><li><strong>FISTA (TV)</strong>: Accelerated proximal gradient optimization with calibrated Lipschitz step size (40 iterations).</li><li><strong>IRN-TV-CGLS</strong>: Iteratively Reweighted Norm TV with conjugate gradient least squares (3 outer x 5 inner iterations).</li></ol><h2 id="Prerequisites"><a class="docs-heading-anchor" href="#Prerequisites">Prerequisites</a><a id="Prerequisites-1"></a><a class="docs-heading-anchor-permalink" href="#Prerequisites" title="Permalink"></a></h2><p>This tutorial uses <strong>Makie</strong> (recommended backend: <strong>CairoMakie</strong>) for visualization. If <code>CairoMakie</code> is not installed in your environment, add it by running <code>using Pkg; Pkg.add(&quot;CairoMakie&quot;)</code>.</p><pre><code class="language-julia hljs">using LinearAlgebra
+using Printf
+using Random
+using Statistics
+using CairoMakie
+using Tigre</code></pre><h2 id="2.-Laminography-Geometry-Setup-(Z-Y-Z-Euler-Angles)"><a class="docs-heading-anchor" href="#2.-Laminography-Geometry-Setup-(Z-Y-Z-Euler-Angles)">2. Laminography Geometry Setup (Z-Y-Z Euler Angles)</a><a id="2.-Laminography-Geometry-Setup-(Z-Y-Z-Euler-Angles)-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Laminography-Geometry-Setup-(Z-Y-Z-Euler-Angles)" title="Permalink"></a></h2><p>In <strong>Tigre.jl</strong>, arbitrary 3D scanning trajectories are defined by a <span>$3 \times N$</span> matrix of Euler angles <span>$(\alpha, \beta, \gamma)$</span> in <strong>Z-Y-Z order</strong>:</p><ul><li><p class="math-container">\[\alpha\]</p>: Azimuthal rotation <span>$\phi \in [0, 2\pi)$</span> around the inclined axis.</li><li><p class="math-container">\[\beta\]</p>: Inclination / tilt angle <span>$\theta = 20^\circ$</span> (<span>$=\pi / 9$</span>) around the Y-axis (representative of realistic industrial laminography scanners).</li><li><p class="math-container">\[\gamma\]</p>: Secondary roll angle (<span>$0$</span> for standard rotational laminography).</li></ul><p>Here, we configure a 90-projection cone-beam laminography scanner with source-to-origin distance <code>DSO = 1000 mm</code> and source-to-detector distance <code>DSD = 1500 mm</code>.</p><pre><code class="language-julia hljs">nangles = 90
+phi = LinRange(0f0, 2f0 * Float32(pi), nangles + 1)[1:end-1] |&gt; collect
+theta_tilt = Float32(deg2rad(20f0))  # 20-degree inclination angle (standard industrial laminography)
+
+# Construct 3 x N Euler angle matrix (Z-Y-Z order)
+angles_cl = zeros(Float32, 3, nangles)
+angles_cl[1, :] .= phi         # Rotation around tilted axis
+angles_cl[2, :] .= theta_tilt  # 20-degree tilt
+angles_cl[3, :] .= 0f0
+
+nx, ny, nz = 256, 256, 64
+geo = Geometry(
+    mode = :cone,
+    angles = angles_cl,
+    nVoxel = (nx, ny, nz),
+    sVoxel = (256f0, 256f0, 64f0),
+    nDetector = (320, 320),
+    sDetector = (480f0, 480f0),
+    DSO = 1000f0,
+    DSD = 1500f0
+)
+
+println(&quot;Laminography Geometry configured:&quot;)
+println(&quot;  Volume shape:     &quot;, volume_size(geo), &quot; (Z is board normal)&quot;)
+println(&quot;  Detector shape:   &quot;, projection_size(geo))
+println(&quot;  Tilt angle:       &quot;, rad2deg(theta_tilt), &quot; degrees&quot;)
+println(&quot;  Projections:      &quot;, length(phi), &quot; views&quot;)
+</code></pre><pre><code class="language-text hljs">Laminography Geometry configured:
+  Volume shape:     (256, 256, 64) (Z is board normal)
+  Detector shape:   (320, 320, 90)
+  Tilt angle:       19.999998 degrees
+  Projections:      90 views</code></pre><h2 id="3.-Multi-Layer-Planar-Object-(PCB-Simulation)"><a class="docs-heading-anchor" href="#3.-Multi-Layer-Planar-Object-(PCB-Simulation)">3. Multi-Layer Planar Object (PCB Simulation)</a><a id="3.-Multi-Layer-Planar-Object-(PCB-Simulation)-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Multi-Layer-Planar-Object-(PCB-Simulation)" title="Permalink"></a></h2><p>We construct a realistic 3-layer planar PCB phantom designed specifically to evaluate depth resolution and cross-talk suppression:</p><ul><li><strong>Layer 1 (Top Traces &amp; Solder Pads, <span>$Z = 12 \sim 19$</span>, thickness 8 slices)</strong>: Surface copper traces and square solder pads (attenuation <span>$\mu = 1.0 \sim 1.2$</span>).</li><li><strong>Substrate Gap 1 (<span>$Z = 20 \sim 27$</span>, 8 slices)</strong>: Empty dielectric insulating space (ground truth <span>$\mu = 0$</span>).</li><li><strong>Layer 2 (Functional Silicon Die &amp; Vias, <span>$Z = 28 \sim 36$</span>, thickness 9 slices)</strong>: Central silicon micro-chip (<span>$\mu = 0.8$</span>) and vertical via contacts (<span>$\mu = 1.5$</span>).</li><li><strong>Substrate Gap 2 (<span>$Z = 37 \sim 44$</span>, 8 slices)</strong>: Empty dielectric insulating space (ground truth <span>$\mu = 0$</span>).</li><li><strong>Layer 3 (Bottom Power/Ground Bus, <span>$Z = 45 \sim 51$</span>, thickness 7 slices)</strong>: Orthogonal power/ground bus traces (<span>$\mu = 1.0$</span>).</li><li><strong>Substrate Margin (<span>$Z = 52 \sim 64$</span>, 13 slices)</strong>: Empty space (ground truth <span>$\mu = 0$</span>).</li></ul><p>Notice that each layer has a distinct, realistic volumetric thickness (8, 9, and 7 slices) corresponding to its physical component type. Any signal detected in the substrate gap slices represents out-of-plane cross-talk leakage!</p><pre><code class="language-julia hljs">phantom = zeros(Float32, nx, ny, nz)
+
+# Layer 1 (z = 12:19, 8 slices): Surface traces &amp; solder pads
+phantom[64:192, 80:96, 12:19] .= 1.0f0
+phantom[64:192, 160:176, 12:19] .= 1.0f0
+phantom[112:144, 112:144, 12:19] .= 1.2f0
+
+# Layer 2 (z = 28:36, 9 slices): Central circular silicon chip and corner vias
+for x in 1:nx, y in 1:ny
+    if (x - 128)^2 + (y - 128)^2 &lt;= 56^2
+        phantom[x, y, 28:36] .= 0.8f0
+    end
+    if (x - 80)^2 + (y - 80)^2 &lt;= 16^2 || (x - 176)^2 + (y - 80)^2 &lt;= 16^2 ||
+       (x - 80)^2 + (y - 176)^2 &lt;= 16^2 || (x - 176)^2 + (y - 176)^2 &lt;= 16^2
+        phantom[x, y, 28:36] .= 1.5f0
+    end
+end
+
+# Layer 3 (z = 45:51, 7 slices): Bottom orthogonal bus traces
+phantom[80:96, 64:192, 45:51] .= 1.0f0
+phantom[160:176, 64:192, 45:51] .= 1.0f0
+
+println(&quot;PCB Phantom constructed: 3 layers with realistic thicknesses (Z=12:19 [8], 28:36 [9], 45:51 [7]).&quot;)
+
+fig = Figure(size = (800, 600))
+ax1 = Axis(fig[1, 1], title = &quot;GT Layer 1 (z=15)&quot;, aspect = DataAspect())
+hidedecorations!(ax1)
+heatmap!(ax1, phantom[:, :, 15], colormap = :grays, colorrange = (0.0f0, 1.5f0))
+
+ax2 = Axis(fig[1, 2], title = &quot;GT Layer 2 (z=32)&quot;, aspect = DataAspect())
+hidedecorations!(ax2)
+heatmap!(ax2, phantom[:, :, 32], colormap = :grays, colorrange = (0.0f0, 1.5f0))
+
+ax3 = Axis(fig[2, 1], title = &quot;GT Layer 3 (z=48)&quot;, aspect = DataAspect())
+hidedecorations!(ax3)
+heatmap!(ax3, phantom[:, :, 48], colormap = :grays, colorrange = (0.0f0, 1.5f0))
+
+ax4 = Axis(fig[2, 2], title = &quot;GT X-Z Slice (y=128)&quot;, xlabel = &quot;X&quot;, ylabel = &quot;Z&quot;, aspect = DataAspect())
+hm = heatmap!(ax4, phantom[:, 128, :], colormap = :grays, colorrange = (0.0f0, 1.5f0))
+
+Colorbar(fig[:, 3], hm)
+fig
+</code></pre><pre><code class="language-text hljs">PCB Phantom constructed: 3 layers with realistic thicknesses (Z=12:19 [8], 28:36 [9], 45:51 [7]).</code></pre><p><img src="../../assets/tutorials/09_laminography_conebeam_01.png" alt/></p><h2 id="4.-Projection-Acquisition-and-Realistic-CT-Noise-Simulation"><a class="docs-heading-anchor" href="#4.-Projection-Acquisition-and-Realistic-CT-Noise-Simulation">4. Projection Acquisition &amp; Realistic CT Noise Simulation</a><a id="4.-Projection-Acquisition-and-Realistic-CT-Noise-Simulation-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Projection-Acquisition-and-Realistic-CT-Noise-Simulation" title="Permalink"></a></h2><p>We simulate X-ray projections using <code>Ax(phantom, geo)</code> and corrupt the sinograms using <code>add_ct_noise</code>:</p><ul><li>Beer-Lambert Poisson quantum photon noise with incident photon count <span>$I_0 = 5,000$</span> (representing realistic low-dose/high-speed industrial imaging).</li><li>Gaussian electronic readout noise with standard deviation <span>$\sigma = 0.5$</span>.</li><li>Projections are oriented naturally with detector horizontal <span>$U$</span> and vertical <span>$V$</span> channels.</li></ul><pre><code class="language-julia hljs"># Clean cone-beam forward projection
+proj_clean = Ax(phantom, geo)
+
+# Add realistic Poisson quantum + Gaussian electronic noise (I0 = 5,000)
+proj_noisy = add_ct_noise(proj_clean; I0 = 5000.0, gaussian = (0f0, 0.5f0), rng = MersenneTwister(42))
+
+# Plot sample projections (displayed naturally with detector U and V axes)
+fig = Figure(size = (800, 600))
+ax1 = Axis(fig[1, 1], title = &quot;Projection (phi = 0 deg)&quot;, aspect = DataAspect())
+hidedecorations!(ax1)
+heatmap!(ax1, proj_noisy[:, :, 1], colormap = :viridis)
+
+ax2 = Axis(fig[1, 2], title = &quot;Projection (phi = 90 deg)&quot;, aspect = DataAspect())
+hidedecorations!(ax2)
+heatmap!(ax2, proj_noisy[:, :, 23], colormap = :viridis)
+
+ax3 = Axis(fig[2, 1], title = &quot;Projection (phi = 180 deg)&quot;, aspect = DataAspect())
+hidedecorations!(ax3)
+heatmap!(ax3, proj_noisy[:, :, 46], colormap = :viridis)
+
+ax4 = Axis(fig[2, 2], title = &quot;Projection (phi = 270 deg)&quot;, aspect = DataAspect())
+hidedecorations!(ax4)
+heatmap!(ax4, proj_noisy[:, :, 69], colormap = :viridis)
+fig
+</code></pre><p><img src="../../assets/tutorials/09_laminography_conebeam_02.png" alt/></p><h2 id="5.-Multi-Algorithm-Reconstruction-Benchmark"><a class="docs-heading-anchor" href="#5.-Multi-Algorithm-Reconstruction-Benchmark">5. Multi-Algorithm Reconstruction Benchmark</a><a id="5.-Multi-Algorithm-Reconstruction-Benchmark-1"></a><a class="docs-heading-anchor-permalink" href="#5.-Multi-Algorithm-Reconstruction-Benchmark" title="Permalink"></a></h2><p>We now reconstruct the multi-layer object using 7 distinct algorithms:</p><ol><li><strong>FDK (Hann)</strong>: Direct analytical filtered backprojection.</li><li><strong>CGLS</strong>: Unregularized Krylov conjugate gradient least squares (15 iterations).</li><li><strong>SART</strong>: Classical unregularized algebraic reconstruction (12 iterations, <span>$\lambda = 0.5$</span>).</li><li><strong>SART-TV</strong>: Algebraic reconstruction with Total Variation proximal regularization (12 iterations, <span>$\lambda = 0.5$</span>, tviter = 5, tvlambda = 100).</li><li><strong>AW-ASD-POCS</strong>: Adaptive-Weighted ASD-POCS preserving sharp edges (12 iterations, 10 TV steps).</li><li><strong>FISTA (TV)</strong>: Accelerated proximal gradient with calibrated Lipschitz power iteration (<code>hyper = fista_hyper</code>, 40 iterations).</li><li><strong>IRN-TV-CGLS</strong>: Iteratively Reweighted Norm TV CGLS (3 outer iterations, 5 inner CGLS iterations).</li></ol><pre><code class="language-julia hljs"># =============================================================================
+# Estimation of FISTA Lipschitz Hyperparameter (`hyper`)
+#
+# FISTA (Fast Iterative Shrinkage-Thresholding Algorithm) relies on proximal gradient descent.
+# Its gradient step size is proportional to 1 / hyper, where hyper represents the Lipschitz
+# constant L ≈ ||Aᵀ A||₂ (the spectral radius of the forward-backward projection operator).
+#
+# If `hyper` is left to the default fallback value, the gradient step size can be drastically
+# mismatched (e.g. orders of magnitude too conservative), leading to poor reconstruction quality
+# and near-zero convergence.
+#
+# We explicitly estimate `fista_hyper` beforehand using the SVD power method via `estimate_hyper(geo)`.
+# Storing it in an explicit variable before calling `fista` makes the parameter calibration step
+# transparent and easily verifiable, emphasizing the critical importance of proper operator norm scaling.
+# =============================================================================
+fista_hyper = estimate_hyper(geo)
+println(&quot;Estimated FISTA Lipschitz hyperparameter: &quot;, fista_hyper)
+</code></pre><pre><code class="language-text hljs">Estimated FISTA Lipschitz hyperparameter: 28345.406</code></pre><pre><code class="language-julia hljs">println(&quot;--&gt; Reconstructing with FDK (Hann)...&quot;)
+t_fdk = @timed fdk(proj_noisy, geo; filter = :hann)
+rec_fdk = t_fdk.value
+
+println(&quot;--&gt; Reconstructing with CGLS (15 iter)...&quot;)
+t_cgls = @timed cgls(proj_noisy, geo, 15)
+rec_cgls = t_cgls.value
+
+println(&quot;--&gt; Reconstructing with SART (12 iter)...&quot;)
+t_sart = @timed sart(proj_noisy, geo, 12; lambda = 0.5f0)
+rec_sart = t_sart.value
+
+println(&quot;--&gt; Reconstructing with SART-TV (12 iter)...&quot;)
+t_sart_tv = @timed sart_tv(proj_noisy, geo, 12; lambda = 0.5f0, tviter = 5, tvlambda = 100f0)
+rec_sart_tv = t_sart_tv.value
+
+println(&quot;--&gt; Reconstructing with AW-ASD-POCS (12 iter)...&quot;)
+t_awasd = @timed awasd_pocs(proj_noisy, geo, 12; tviter = 10, alpha = 0.002f0)
+rec_awasd = t_awasd.value
+
+println(&quot;--&gt; Reconstructing with FISTA (TV, hyper=fista_hyper, 40 iter)...&quot;)
+t_fista = @timed fista(proj_noisy, geo, 40; tviter = 10, hyper = fista_hyper, tvlambda = 0.1f0)
+rec_fista = t_fista.value
+
+println(&quot;--&gt; Reconstructing with IRN-TV-CGLS (3 outer x 5 inner)...&quot;)
+t_irn = @timed irn_tv_cgls(proj_noisy, geo, 5; niter_outer = 3)
+rec_irn = t_irn.value
+
+models = [
+    (&quot;FDK (Hann)&quot;,        rec_fdk,     t_fdk.time),
+    (&quot;CGLS (15 iter)&quot;,    rec_cgls,    t_cgls.time),
+    (&quot;SART (12 iter)&quot;,    rec_sart,    t_sart.time),
+    (&quot;SART-TV (12 iter)&quot;, rec_sart_tv, t_sart_tv.time),
+    (&quot;AW-ASD-POCS (12)&quot;,  rec_awasd,   t_awasd.time),
+    (&quot;FISTA (40 iter)&quot;,   rec_fista,   t_fista.time),
+    (&quot;IRN-TV-CGLS (3x5)&quot;, rec_irn,     t_irn.time)
+]
+
+println(&quot;=&quot; ^ 75)
+@printf(&quot;%-20s | %-8s | %-8s | %-8s | %-8s\n&quot;, &quot;Algorithm&quot;, &quot;PSNR (dB)&quot;, &quot;SSIM&quot;, &quot;RMSE&quot;, &quot;Time (s)&quot;)
+println(&quot;-&quot; ^ 75)
+for (name, rec, runtime) in models
+    q = measure_quality(phantom, rec)
+    @printf(&quot;%-20s | %8.2f | %8.4f | %8.4f | %8.2f\n&quot;, name, q.psnr, q.ssim, q.rmse, runtime)
+end
+println(&quot;=&quot; ^ 75)
+</code></pre><pre><code class="language-text hljs">--&gt; Reconstructing with FDK (Hann)...
+--&gt; Reconstructing with CGLS (15 iter)...
+--&gt; Reconstructing with SART (12 iter)...
+--&gt; Reconstructing with SART-TV (12 iter)...
+--&gt; Reconstructing with AW-ASD-POCS (12 iter)...
+--&gt; Reconstructing with FISTA (TV, hyper=fista_hyper, 40 iter)...
+--&gt; Reconstructing with IRN-TV-CGLS (3 outer x 5 inner)...
+===========================================================================
+Algorithm            | PSNR (dB) | SSIM     | RMSE     | Time (s)
+---------------------------------------------------------------------------
+FDK (Hann)           |    22.18 |   0.6093 |   0.1486 |     2.06
+CGLS (15 iter)       |    23.44 |   0.7560 |   0.1382 |     3.52
+SART (12 iter)       |    30.83 |   0.9197 |   0.0833 |    19.99
+SART-TV (12 iter)    |    32.64 |   0.9168 |   0.0878 |    19.16
+AW-ASD-POCS (12)     |    30.46 |   0.9221 |   0.0820 |    17.13
+FISTA (40 iter)      |    28.47 |   0.9175 |   0.0833 |     3.89
+IRN-TV-CGLS (3x5)    |    23.06 |   0.7557 |   0.1362 |     2.76
+===========================================================================</code></pre><h2 id="6.-Layer-by-Layer-Separation-Analysis-(X-Y-Planes)"><a class="docs-heading-anchor" href="#6.-Layer-by-Layer-Separation-Analysis-(X-Y-Planes)">6. Layer-by-Layer Separation Analysis (X-Y Planes)</a><a id="6.-Layer-by-Layer-Separation-Analysis-(X-Y-Planes)-1"></a><a class="docs-heading-anchor-permalink" href="#6.-Layer-by-Layer-Separation-Analysis-(X-Y-Planes)" title="Permalink"></a></h2><p>In planar inspection, the most critical test is whether out-of-plane features bleed into adjacent functional layers.</p><p>Below, we compare the middle slice of <strong>Layer 2 (<span>$Z = 32$</span>)</strong> across all reconstructions and Ground Truth (8 panels in total). Notice how:</p><ul><li><strong>FDK</strong> exhibits severe ghosting: the rectangular copper traces from Layer 1 and the bus lines from Layer 3 bleed prominently into Layer 2 as heavy cross-talk streaks.</li><li><strong>SART</strong> significantly reduces streak artifacts compared to FDK.</li><li><strong>SART-TV</strong>, <strong>AW-ASD-POCS</strong>, and <strong>FISTA (TV)</strong> cleanly reject out-of-plane features, isolating the central silicon chip and vias with sharp, well-defined boundaries and high contrast!</li></ul><pre><code class="language-julia hljs">z_eval = 32  # Center of middle component layer (Z = 32)
+clims = (0.0f0, 1.5f0)
+
+titles = [&quot;Ground Truth&quot;, &quot;FDK (Hann)&quot;, &quot;CGLS (15)&quot;, &quot;SART (12)&quot;, &quot;SART-TV (12)&quot;, &quot;AW-ASD-POCS (12)&quot;, &quot;FISTA (40)&quot;, &quot;IRN-TV-CGLS&quot;]
+imgs = [phantom, rec_fdk, rec_cgls, rec_sart, rec_sart_tv, rec_awasd, rec_fista, rec_irn]
+
+fig = Figure(size = (1100, 560))
+for (idx, (t, vol)) in enumerate(zip(titles, imgs))
+    row = (idx - 1) ÷ 4 + 1
+    col = (idx - 1) % 4 + 1
+    ax = Axis(fig[row, col], title = t, aspect = DataAspect())
+    hidedecorations!(ax)
+    heatmap!(ax, vol[:, :, z_eval], colormap = :grays, colorrange = clims)
+end
+fig
+</code></pre><p><img src="../../assets/tutorials/09_laminography_conebeam_03.png" alt/></p><h2 id="7.-Out-of-Plane-Depth-Resolution-and-Missing-Cone-Analysis-(X-Z-Slices)"><a class="docs-heading-anchor" href="#7.-Out-of-Plane-Depth-Resolution-and-Missing-Cone-Analysis-(X-Z-Slices)">7. Out-of-Plane Depth Resolution &amp; Missing-Cone Analysis (X-Z Slices)</a><a id="7.-Out-of-Plane-Depth-Resolution-and-Missing-Cone-Analysis-(X-Z-Slices)-1"></a><a class="docs-heading-anchor-permalink" href="#7.-Out-of-Plane-Depth-Resolution-and-Missing-Cone-Analysis-(X-Z-Slices)" title="Permalink"></a></h2><p>To directly visualize the missing-cone artifact, we extract a vertical cross-section in the <strong><span>$X-Z$</span> plane</strong> traversing <span>$Y = 128$</span> for all 7 algorithms and Ground Truth.</p><ul><li>In the Ground Truth, the 3 discrete copper/die layers appear as sharp horizontal bands separated by pure zero-density gaps.</li><li>In <strong>FDK</strong>, the missing cone causes severe vertical elongation: the layers blur together into a thick diffuse smear.</li><li>In <strong>SART-TV</strong>, <strong>AW-ASD-POCS</strong>, and <strong>FISTA</strong>, TV regularization suppresses depth cross-talk, keeping the intermediate dielectric layers dark and clean.</li></ul><pre><code class="language-julia hljs">y_eval = 128  # Center plane cutting across traces and circular component
+clims = (0.0f0, 1.5f0)
+
+titles = [&quot;GT (X-Z)&quot;, &quot;FDK (Hann)&quot;, &quot;CGLS (15)&quot;, &quot;SART (12)&quot;, &quot;SART-TV (12)&quot;, &quot;AW-ASD-POCS (12)&quot;, &quot;FISTA (40)&quot;, &quot;IRN-TV-CGLS&quot;]
+imgs = [phantom, rec_fdk, rec_cgls, rec_sart, rec_sart_tv, rec_awasd, rec_fista, rec_irn]
+
+fig = Figure(size = (1100, 560))
+for (idx, (t, vol)) in enumerate(zip(titles, imgs))
+    row = (idx - 1) ÷ 4 + 1
+    col = (idx - 1) % 4 + 1
+    ax = Axis(fig[row, col], title = t, xlabel = (row == 2 ? &quot;X&quot; : &quot;&quot;), ylabel = (col == 1 ? &quot;Z&quot; : &quot;&quot;), aspect = DataAspect())
+    heatmap!(ax, vol[:, y_eval, :], colormap = :grays, colorrange = clims)
+end
+fig
+</code></pre><p><img src="../../assets/tutorials/09_laminography_conebeam_04.png" alt/></p><h2 id="8.-1D-Depth-Profile-Analysis-Across-Layers"><a class="docs-heading-anchor" href="#8.-1D-Depth-Profile-Analysis-Across-Layers">8. 1D Depth Profile Analysis Across Layers</a><a id="8.-1D-Depth-Profile-Analysis-Across-Layers-1"></a><a class="docs-heading-anchor-permalink" href="#8.-1D-Depth-Profile-Analysis-Across-Layers" title="Permalink"></a></h2><p>We extract a 1D vertical line profile along the <span>$Z$</span>-axis through the center <span>$(X = 128, Y = 128)$</span>. This profile traverses:</p><ul><li><p class="math-container">\[Z = 12 \sim 19\]</p>: Top traces/solder pads (Layer 1, thickness 8 slices)</li><li><p class="math-container">\[Z = 20 \sim 27\]</p>: Empty dielectric space (Ground Truth = 0, 8 slices)</li><li><p class="math-container">\[Z = 28 \sim 36\]</p>: Center silicon chip (Layer 2, <span>$\mu = 0.8$</span>, thickness 9 slices)</li><li><p class="math-container">\[Z = 37 \sim 44\]</p>: Empty dielectric space (Ground Truth = 0, 8 slices)</li><li><p class="math-container">\[Z = 45 \sim 51\]</p>: Bottom bus layer (Layer 3, thickness 7 slices)</li></ul><p>Notice how <strong>SART-TV</strong>, <strong>AW-ASD-POCS</strong>, and <strong>FISTA</strong> maintain flat, accurate plateaus within layers and drop sharply to 0 in the dielectric gaps, whereas FDK exhibits significant background elevation due to missing-cone bleeding.</p><pre><code class="language-julia hljs">z_coords = 1:nz
+cx, cy = 128, 128
+
+fig = Figure(size = (850, 420))
+ax = Axis(fig[1, 1], title = &quot;Vertical Depth Profile Across Layers (Z-Axis)&quot;,
+          xlabel = &quot;Voxel Z Index (Depth)&quot;, ylabel = &quot;Attenuation Coefficient&quot;)
+lines!(ax, z_coords, phantom[cx, cy, :], label = &quot;Ground Truth&quot;, linewidth = 3, color = :black)
+lines!(ax, z_coords, rec_fdk[cx, cy, :], label = &quot;FDK (Hann)&quot;, linewidth = 1.5, linestyle = :dash, color = :red)
+lines!(ax, z_coords, rec_cgls[cx, cy, :], label = &quot;CGLS&quot;, linewidth = 2, color = :blue)
+lines!(ax, z_coords, rec_sart[cx, cy, :], label = &quot;SART&quot;, linewidth = 2, color = :cyan4)
+lines!(ax, z_coords, rec_sart_tv[cx, cy, :], label = &quot;SART-TV&quot;, linewidth = 2.5, color = :green)
+lines!(ax, z_coords, rec_awasd[cx, cy, :], label = &quot;AW-ASD-POCS&quot;, linewidth = 2.5, color = :orange)
+lines!(ax, z_coords, rec_fista[cx, cy, :], label = &quot;FISTA (TV)&quot;, linewidth = 2, color = :purple)
+lines!(ax, z_coords, rec_irn[cx, cy, :], label = &quot;IRN-TV-CGLS&quot;, linewidth = 2, linestyle = :dot, color = :magenta)
+axislegend(ax, position = :rt)
+fig
+</code></pre><p><img src="../../assets/tutorials/09_laminography_conebeam_05.png" alt/></p><h2 id="9.-Summary-and-Laminography-Algorithm-Selection-Guide"><a class="docs-heading-anchor" href="#9.-Summary-and-Laminography-Algorithm-Selection-Guide">9. Summary &amp; Laminography Algorithm Selection Guide</a><a id="9.-Summary-and-Laminography-Algorithm-Selection-Guide-1"></a><a class="docs-heading-anchor-permalink" href="#9.-Summary-and-Laminography-Algorithm-Selection-Guide" title="Permalink"></a></h2><table><tr><th style="text-align: left">Reconstruction Method</th><th style="text-align: left">Depth Resolution (Z-axis)</th><th style="text-align: left">In-Plane Resolution (X-Y)</th><th style="text-align: left">Computational Speed</th><th style="text-align: left">Recommended Use Case</th></tr><tr><td style="text-align: left"><strong>FDK (Hann)</strong></td><td style="text-align: left">Poor (severe missing-cone blur)</td><td style="text-align: left">Moderate</td><td style="text-align: left">Ultra-fast (single pass)</td><td style="text-align: left">Real-time coarse alignment &amp; preview</td></tr><tr><td style="text-align: left"><strong>CGLS</strong></td><td style="text-align: left">Moderate (some Z-elongation)</td><td style="text-align: left">High</td><td style="text-align: left">Fast</td><td style="text-align: left">Rapid iterative baseline without TV</td></tr><tr><td style="text-align: left"><strong>SART</strong></td><td style="text-align: left">Moderate (good in-plane clarity)</td><td style="text-align: left">High</td><td style="text-align: left">Moderate</td><td style="text-align: left">Classical algebraic iterative baseline</td></tr><tr><td style="text-align: left"><strong>SART-TV</strong></td><td style="text-align: left">High (strong layer isolation)</td><td style="text-align: left">High</td><td style="text-align: left">Moderate</td><td style="text-align: left">General multi-layer planar inspection</td></tr><tr><td style="text-align: left"><strong>AW-ASD-POCS</strong></td><td style="text-align: left"><strong>Highest (edge-preserving)</strong></td><td style="text-align: left"><strong>Highest (sharp lines)</strong></td><td style="text-align: left">Moderate</td><td style="text-align: left">High-density PCB traces, BGAs, IC bonding</td></tr><tr><td style="text-align: left"><strong>FISTA (TV)</strong></td><td style="text-align: left">High</td><td style="text-align: left">High</td><td style="text-align: left">Fast (<code>hyper=calibrated</code>)</td><td style="text-align: left">Large-volume planar inspection pipelines</td></tr><tr><td style="text-align: left"><strong>IRN-TV-CGLS</strong></td><td style="text-align: left">High</td><td style="text-align: left">Very High (sparse features)</td><td style="text-align: left">Moderate</td><td style="text-align: left">High-contrast metal trace separation</td></tr></table><h3 id="Engineering-Takeaways-for-Computed-Laminography"><a class="docs-heading-anchor" href="#Engineering-Takeaways-for-Computed-Laminography">Engineering Takeaways for Computed Laminography</a><a id="Engineering-Takeaways-for-Computed-Laminography-1"></a><a class="docs-heading-anchor-permalink" href="#Engineering-Takeaways-for-Computed-Laminography" title="Permalink"></a></h3><ol><li><strong>Never rely solely on analytical FDK for planar inspection</strong>: FDK is fundamentally limited by the missing-cone geometry, causing ghost traces to appear across adjacent functional layers.</li><li><strong>Total Variation regularization is transformative for Laminography</strong>: Because planar electronic packages consist of piecewise-constant materials (copper, silicon, solder, substrate), TV regularization acts as an optimal prior to fill in the missing Fourier cone.</li><li><strong>AW-ASD-POCS and SART-TV provide superior layer isolation</strong>: They preserve thin wiring and solder balls without over-smoothing while keeping intermediate dielectric substrate layers clean and dark.</li></ol></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../08_offset_detector_fov/">« 08: Offset Detector &amp; Extended FOV</a><a class="docs-footer-nextpage" href="../10_emission_mlem_osem/">10: Emission Tomography (PET/SPECT) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Saturday 10 October 2026 07:37">Saturday 10 October 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

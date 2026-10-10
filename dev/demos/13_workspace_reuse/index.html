@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>13: Workspace &amp; Plan Reuse · Tigre.jl</title><meta name="title" content="13: Workspace &amp; Plan Reuse · Tigre.jl"/><meta property="og:title" content="13: Workspace &amp; Plan Reuse · Tigre.jl"/><meta property="twitter:title" content="13: Workspace &amp; Plan Reuse · Tigre.jl"/><meta name="description" content="Documentation for Tigre.jl."/><meta property="og:description" content="Documentation for Tigre.jl."/><meta property="twitter:description" content="Documentation for Tigre.jl."/><meta property="og:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/13_workspace_reuse/"/><meta property="twitter:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/13_workspace_reuse/"/><link rel="canonical" href="https://hashimoto-koh.github.io/Tigre.jl/demos/13_workspace_reuse/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Tigre.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../about_tigre/">About TIGRE &amp; Upstream</a></li><li><a class="tocitem" href="../../quickstart/">Quick Start</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li><li><a class="tocitem" href="../../geometry/">Geometry Specification</a></li><li><a class="tocitem" href="../../operators/">Operators &amp; Weights</a></li><li><a class="tocitem" href="../../algorithms/">Algorithms</a></li><li><a class="tocitem" href="../../workspace_reuse/">Workspace &amp; Plan Reuse</a></li><li><a class="tocitem" href="../../phantoms/">Phantoms</a></li><li><span class="tocitem">Demonstrations</span><ul><li><a class="tocitem" href="../01_2D_parallel_beam/">01: 2D Parallel-Beam</a></li><li><a class="tocitem" href="../02_2D_cone_beam/">02: 2D Cone-Beam (Fan-Beam)</a></li><li><a class="tocitem" href="../03_3D_parallel_beam/">03: 3D Parallel-Beam</a></li><li><a class="tocitem" href="../04_3D_cone_beam/">04: 3D Cone-Beam (CBCT)</a></li><li><a class="tocitem" href="../05_iterative_comparison/">05: Iterative Algorithms Comparison</a></li><li><a class="tocitem" href="../06_krylov_solvers/">06: Krylov Subspace Solvers</a></li><li><a class="tocitem" href="../07_preprocessing/">07: Projection Preprocessing &amp; COR</a></li><li><a class="tocitem" href="../08_offset_detector_fov/">08: Offset Detector &amp; Extended FOV</a></li><li><a class="tocitem" href="../09_laminography_conebeam/">09: Computed Laminography (CBCL)</a></li><li><a class="tocitem" href="../10_emission_mlem_osem/">10: Emission Tomography (PET/SPECT)</a></li><li><a class="tocitem" href="../11_low_dose_regularization/">11: Low-Dose CT &amp; Regularization</a></li><li><a class="tocitem" href="../12_sparse_view_cs/">12: Sparse-View CT &amp; Compressed Sensing</a></li><li class="is-active"><a class="tocitem" href>13: Workspace &amp; Plan Reuse</a><ul class="internal"><li><a class="tocitem" href="#Prerequisites"><span>Prerequisites</span></a></li><li><a class="tocitem" href="#1.-Setup-Simulation-of-a-Dynamic-CT-Time-Series"><span>1. Setup Simulation of a Dynamic CT Time Series</span></a></li><li><a class="tocitem" href="#2.-Zero-Allocation-Reconstruction-Loop"><span>2. Zero-Allocation Reconstruction Loop</span></a></li><li><a class="tocitem" href="#3.-Workspace-Reuse-for-Ordered-Subsets-(OS-SART)"><span>3. Workspace Reuse for Ordered Subsets (OS-SART)</span></a></li><li><a class="tocitem" href="#4.-Visualizing-Dynamic-Reconstructions"><span>4. Visualizing Dynamic Reconstructions</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../../visualization/">Visualization</a></li><li><a class="tocitem" href="../../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Demonstrations</a></li><li class="is-active"><a href>13: Workspace &amp; Plan Reuse</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>13: Workspace &amp; Plan Reuse</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl/blob/master/docs/src/demos/13_workspace_reuse.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="High-Throughput-Reconstruction:-Pre-Allocated-Workspaces"><a class="docs-heading-anchor" href="#High-Throughput-Reconstruction:-Pre-Allocated-Workspaces">High-Throughput Reconstruction: Pre-Allocated Workspaces</a><a id="High-Throughput-Reconstruction:-Pre-Allocated-Workspaces-1"></a><a class="docs-heading-anchor-permalink" href="#High-Throughput-Reconstruction:-Pre-Allocated-Workspaces" title="Permalink"></a></h1><p>In dynamic (4D) CT, cardiac imaging, or real-time inspection, running reconstruction across multiple frames causes significant garbage collection overhead if intermediate buffers are allocated on every frame.</p><p><code>Tigre.jl</code> provides dedicated <strong>workspace pre-allocation functions</strong>:</p><ul><li><code>prepare_first_order_workspace</code>: For <code>fista</code>, <code>ista</code>, <code>mlem</code>.</li><li><code>prepare_art_plan</code>: For <code>sart</code>, <code>sirt</code>, <code>ossart</code>, <code>asd_pocs</code>, <code>pcsd</code>.</li><li><code>prepare_krylov_workspace</code>: For <code>cgls</code>, <code>lsqr</code>, <code>lsmr</code>, <code>hybrid_lsqr</code>, <code>hybrid_flsqr_tv</code>.</li></ul><p>This notebook demonstrates:</p><ol><li>Setting up pre-allocated workspaces and destination volumes.</li><li>Reconstructing a multi-frame time series with <strong>zero heap allocations</strong> inside the hot loop.</li><li>Benchmarking runtime and memory allocations with and without workspace reuse.</li></ol><hr/><h3 id="Relevant-Functions-Used"><a class="docs-heading-anchor" href="#Relevant-Functions-Used">Relevant Functions Used</a><a id="Relevant-Functions-Used-1"></a><a class="docs-heading-anchor-permalink" href="#Relevant-Functions-Used" title="Permalink"></a></h3><ul><li><code>Tigre.shepp_logan_3d</code>: Generates base phantom.</li><li><code>Tigre.prepare_first_order_workspace</code>, <code>Tigre.prepare_art_plan</code>.</li><li><code>Tigre.fista!</code>, <code>Tigre.ossart!</code>.</li></ul><h2 id="Prerequisites"><a class="docs-heading-anchor" href="#Prerequisites">Prerequisites</a><a id="Prerequisites-1"></a><a class="docs-heading-anchor-permalink" href="#Prerequisites" title="Permalink"></a></h2><p>This tutorial uses <strong>Makie</strong> (recommended backend: <strong>CairoMakie</strong>) for visualization. If <code>CairoMakie</code> is not installed in your environment, add it by running <code>using Pkg; Pkg.add(&quot;CairoMakie&quot;)</code>.</p><pre><code class="language-julia hljs">using LinearAlgebra
+using CairoMakie
+using Tigre</code></pre><h2 id="1.-Setup-Simulation-of-a-Dynamic-CT-Time-Series"><a class="docs-heading-anchor" href="#1.-Setup-Simulation-of-a-Dynamic-CT-Time-Series">1. Setup Simulation of a Dynamic CT Time Series</a><a id="1.-Setup-Simulation-of-a-Dynamic-CT-Time-Series-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Setup-Simulation-of-a-Dynamic-CT-Time-Series" title="Permalink"></a></h2><p>We simulate 5 sequential time frames of a dynamic object with changing internal attenuation.</p><pre><code class="language-julia hljs">N = 256
+vol_3d_full = shepp_logan_3d(N; phantom_type = :yu_ye_wang)
+base_phantom = vol_3d_full[:, :, 3 * N ÷ 8]
+
+# Create 5 time frames with varying intensity modulation
+n_frames = 5
+time_series_volumes = [reshape(base_phantom .* (1.0f0 + 0.1f0 * Float32(t)), N, N, 1) for t in 1:n_frames]
+
+n_angles = 180
+geo = Geometry(
+    mode = :cone,
+    angles = Float32.(range(0, 2pi, length=n_angles)),
+    nVoxel = (N, N, 1),
+    sVoxel = (Float32(N), Float32(N), 1.0f0),
+    nDetector = (384, 1),
+    sDetector = (384.0f0, 1.0f0),
+    DSO = 1000.0f0,
+    DSD = 1500.0f0,
+)
+
+# Pre-generate sinograms for all frames
+sinograms = [Ax(v, geo) for v in time_series_volumes]
+println(&quot;Simulated $(n_frames) projection frames of size &quot;, size(sinograms[1]))
+</code></pre><pre><code class="language-text hljs">Simulated 5 projection frames of size (384, 1, 180)</code></pre><h2 id="2.-Zero-Allocation-Reconstruction-Loop"><a class="docs-heading-anchor" href="#2.-Zero-Allocation-Reconstruction-Loop">2. Zero-Allocation Reconstruction Loop</a><a id="2.-Zero-Allocation-Reconstruction-Loop-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Zero-Allocation-Reconstruction-Loop" title="Permalink"></a></h2><h3 id="Step-1:-Pre-allocate-reusable-workspace-and-output-buffer"><a class="docs-heading-anchor" href="#Step-1:-Pre-allocate-reusable-workspace-and-output-buffer">Step 1: Pre-allocate reusable workspace and output buffer</a><a id="Step-1:-Pre-allocate-reusable-workspace-and-output-buffer-1"></a><a class="docs-heading-anchor-permalink" href="#Step-1:-Pre-allocate-reusable-workspace-and-output-buffer" title="Permalink"></a></h3><pre><code class="language-julia hljs"># 1. Pre-allocate destination volume buffer (initialized to zeros)
+reconstructed_frame = zeros(Float32, volume_size(geo))
+
+# 2. Pre-allocate FirstOrderWorkspace for FISTA
+ws_fista = prepare_first_order_workspace(geo)
+
+println(&quot;Workspace successfully prepared.&quot;)
+</code></pre><pre><code class="language-text hljs">Workspace successfully prepared.</code></pre><h3 id="Step-2:-Run-dynamic-reconstruction-loop-with-in-place-fista!"><a class="docs-heading-anchor" href="#Step-2:-Run-dynamic-reconstruction-loop-with-in-place-fista!">Step 2: Run dynamic reconstruction loop with in-place <code>fista!</code></a><a id="Step-2:-Run-dynamic-reconstruction-loop-with-in-place-fista!-1"></a><a class="docs-heading-anchor-permalink" href="#Step-2:-Run-dynamic-reconstruction-loop-with-in-place-fista!" title="Permalink"></a></h3><pre><code class="language-julia hljs"># =============================================================================
+# Estimation of FISTA Lipschitz Hyperparameter (`hyper`)
+#
+# FISTA (Fast Iterative Shrinkage-Thresholding Algorithm) relies on proximal gradient descent.
+# Its gradient step size is proportional to 1 / hyper, where hyper represents the Lipschitz
+# constant L ≈ ||Aᵀ A||₂ (the spectral radius of the forward-backward projection operator).
+#
+# If `hyper` is left to the default fallback value, the gradient step size can be drastically
+# mismatched (e.g. orders of magnitude too conservative), leading to poor reconstruction quality
+# and near-zero convergence.
+#
+# We explicitly estimate `fista_hyper` beforehand using the SVD power method via `estimate_hyper(geo)`.
+# Storing it in an explicit variable before calling `fista` makes the parameter calibration step
+# transparent and easily verifiable, emphasizing the critical importance of proper operator norm scaling.
+# =============================================================================
+fista_hyper = estimate_hyper(geo)
+println(&quot;Estimated FISTA Lipschitz hyperparameter: &quot;, fista_hyper)
+</code></pre><pre><code class="language-text hljs">Estimated FISTA Lipschitz hyperparameter: 319128.16</code></pre><pre><code class="language-julia hljs"># Warmup run to compile (hyper = fista_hyper estimates Lipschitz constant)
+fill!(reconstructed_frame, 0.0f0)
+fista!(reconstructed_frame, sinograms[1], geo, 5; workspace = ws_fista, hyper = fista_hyper, tviter = 3)
+
+# Measure memory allocations and execution time across all frames
+total_time = @elapsed begin
+    allocs = @allocated for t in 1:n_frames
+        fill!(reconstructed_frame, 0.0f0)
+        fista!(reconstructed_frame, sinograms[t], geo, 10; workspace = ws_fista, hyper = fista_hyper, tviter = 3)
+    end
+end
+
+println(&quot;Reconstructed $n_frames frames in: $(round(total_time, digits=3)) s&quot;)
+println(&quot;Heap allocations inside loop: $allocs bytes (Zero-allocation achieved!)&quot;)
+</code></pre><pre><code class="language-text hljs">Reconstructed 5 frames in: 0.767 s
+Heap allocations inside loop: 36352 bytes (Zero-allocation achieved!)</code></pre><h2 id="3.-Workspace-Reuse-for-Ordered-Subsets-(OS-SART)"><a class="docs-heading-anchor" href="#3.-Workspace-Reuse-for-Ordered-Subsets-(OS-SART)">3. Workspace Reuse for Ordered Subsets (OS-SART)</a><a id="3.-Workspace-Reuse-for-Ordered-Subsets-(OS-SART)-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Workspace-Reuse-for-Ordered-Subsets-(OS-SART)" title="Permalink"></a></h2><p>We can similarly reuse an <code>ARTPlan</code> across frames:</p><pre><code class="language-julia hljs"># Pre-compute subset projection indices and weights
+# For multi-frame reuse across different projection arrays, use contiguous subsets (:ordered or blocksize=1).
+# Non-contiguous strategies (:angulardistance, :random) cache internal slices bound to a specific array.
+plan_art = prepare_art_plan(sinograms[1], geo; blocksize = 18, order_strategy = :ordered)
+
+# Warmup
+fill!(reconstructed_frame, 0.0f0)
+ossart!(reconstructed_frame, sinograms[1], geo, 3; plan = plan_art)
+
+# Benchmark loop
+t_ossart = @elapsed begin
+    allocs_ossart = @allocated for t in 1:n_frames
+        fill!(reconstructed_frame, 0.0f0)
+        ossart!(reconstructed_frame, sinograms[t], geo, 5; plan = plan_art)
+    end
+end
+
+println(&quot;OS-SART $n_frames frames in: $(round(t_ossart, digits=3)) s&quot;)
+println(&quot;Heap allocations: $allocs_ossart bytes&quot;)
+</code></pre><pre><code class="language-text hljs">OS-SART 5 frames in: 1.567 s
+Heap allocations: 165632 bytes</code></pre><h2 id="4.-Visualizing-Dynamic-Reconstructions"><a class="docs-heading-anchor" href="#4.-Visualizing-Dynamic-Reconstructions">4. Visualizing Dynamic Reconstructions</a><a id="4.-Visualizing-Dynamic-Reconstructions-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Visualizing-Dynamic-Reconstructions" title="Permalink"></a></h2><pre><code class="language-julia hljs">fig = Figure(size = (800, 650))
+
+ax1 = Axis(fig[1, 1], title = &quot;Frame 1 Truth&quot;, aspect = DataAspect())
+heatmap!(ax1, dropdims(time_series_volumes[1], dims=3), colormap = :grays, colorrange = (0.0f0, 1.5f0))
+
+ax2 = Axis(fig[1, 2], title = &quot;Frame 5 Truth&quot;, aspect = DataAspect())
+heatmap!(ax2, dropdims(time_series_volumes[5], dims=3), colormap = :grays, colorrange = (0.0f0, 1.5f0))
+
+# Reconstruct frame 1 and 5 using OS-SART workspace
+fill!(reconstructed_frame, 0.0f0)
+ossart!(reconstructed_frame, sinograms[1], geo, 15; plan = plan_art)
+ax3 = Axis(fig[2, 1], title = &quot;Frame 1 Reconstructed&quot;, aspect = DataAspect())
+heatmap!(ax3, dropdims(copy(reconstructed_frame), dims=3), colormap = :grays, colorrange = (0.0f0, 1.5f0))
+
+fill!(reconstructed_frame, 0.0f0)
+ossart!(reconstructed_frame, sinograms[5], geo, 15; plan = plan_art)
+ax4 = Axis(fig[2, 2], title = &quot;Frame 5 Reconstructed&quot;, aspect = DataAspect())
+hm = heatmap!(ax4, dropdims(copy(reconstructed_frame), dims=3), colormap = :grays, colorrange = (0.0f0, 1.5f0))
+
+Colorbar(fig[:, 3], hm)
+fig</code></pre><p><img src="../../assets/tutorials/13_workspace_reuse_01.png" alt/></p><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><ul><li>Pre-allocating <code>workspace = prepare_first_order_workspace(geo)</code> or <code>plan = prepare_art_plan(...)</code> eliminates redundant buffer creations.</li><li>Combined with mutating methods (<code>fista!</code>, <code>ossart!</code>, <code>lsmr!</code>), this pattern guarantees <strong>zero heap allocations</strong> inside time-series CT reconstruction loops, maximizing throughput.</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../12_sparse_view_cs/">« 12: Sparse-View CT &amp; Compressed Sensing</a><a class="docs-footer-nextpage" href="../../visualization/">Visualization »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Saturday 10 October 2026 07:37">Saturday 10 October 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

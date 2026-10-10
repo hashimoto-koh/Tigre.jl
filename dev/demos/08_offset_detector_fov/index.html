@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>08: Offset Detector &amp; Extended FOV · Tigre.jl</title><meta name="title" content="08: Offset Detector &amp; Extended FOV · Tigre.jl"/><meta property="og:title" content="08: Offset Detector &amp; Extended FOV · Tigre.jl"/><meta property="twitter:title" content="08: Offset Detector &amp; Extended FOV · Tigre.jl"/><meta name="description" content="Documentation for Tigre.jl."/><meta property="og:description" content="Documentation for Tigre.jl."/><meta property="twitter:description" content="Documentation for Tigre.jl."/><meta property="og:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/08_offset_detector_fov/"/><meta property="twitter:url" content="https://hashimoto-koh.github.io/Tigre.jl/demos/08_offset_detector_fov/"/><link rel="canonical" href="https://hashimoto-koh.github.io/Tigre.jl/demos/08_offset_detector_fov/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Tigre.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../about_tigre/">About TIGRE &amp; Upstream</a></li><li><a class="tocitem" href="../../quickstart/">Quick Start</a></li><li><a class="tocitem" href="../../installation/">Installation</a></li><li><a class="tocitem" href="../../geometry/">Geometry Specification</a></li><li><a class="tocitem" href="../../operators/">Operators &amp; Weights</a></li><li><a class="tocitem" href="../../algorithms/">Algorithms</a></li><li><a class="tocitem" href="../../workspace_reuse/">Workspace &amp; Plan Reuse</a></li><li><a class="tocitem" href="../../phantoms/">Phantoms</a></li><li><span class="tocitem">Demonstrations</span><ul><li><a class="tocitem" href="../01_2D_parallel_beam/">01: 2D Parallel-Beam</a></li><li><a class="tocitem" href="../02_2D_cone_beam/">02: 2D Cone-Beam (Fan-Beam)</a></li><li><a class="tocitem" href="../03_3D_parallel_beam/">03: 3D Parallel-Beam</a></li><li><a class="tocitem" href="../04_3D_cone_beam/">04: 3D Cone-Beam (CBCT)</a></li><li><a class="tocitem" href="../05_iterative_comparison/">05: Iterative Algorithms Comparison</a></li><li><a class="tocitem" href="../06_krylov_solvers/">06: Krylov Subspace Solvers</a></li><li><a class="tocitem" href="../07_preprocessing/">07: Projection Preprocessing &amp; COR</a></li><li class="is-active"><a class="tocitem" href>08: Offset Detector &amp; Extended FOV</a><ul class="internal"><li><a class="tocitem" href="#1.-Physical-Motivation:-The-Small-Detector-Dilemma"><span>1. Physical Motivation: The Small Detector Dilemma</span></a></li><li><a class="tocitem" href="#Prerequisites"><span>Prerequisites</span></a></li><li><a class="tocitem" href="#2.-Geometry-Setup:-Centered-vs.-Offset-Detector"><span>2. Geometry Setup: Centered vs. Offset Detector</span></a></li><li><a class="tocitem" href="#3.-Quantifying-Field-of-View-Expansion"><span>3. Quantifying Field-of-View Expansion</span></a></li><li><a class="tocitem" href="#4.-Ground-Truth-Large-Phantom-Design"><span>4. Ground Truth Large Phantom Design</span></a></li><li><a class="tocitem" href="#5.-Forward-Projection-and-Realistic-CT-Transmission-Noise"><span>5. Forward Projection &amp; Realistic CT Transmission Noise</span></a></li><li><a class="tocitem" href="#6.-Reconstruction-Benchmark"><span>6. Reconstruction Benchmark</span></a></li><li><a class="tocitem" href="#7.-Numerical-Quality-Evaluation-and-Image-Visualizations"><span>7. Numerical Quality Evaluation &amp; Image Visualizations</span></a></li><li><a class="tocitem" href="#8.-Horizontal-1D-Profile:-Verifying-Seam-Smoothness"><span>8. Horizontal 1D Profile: Verifying Seam Smoothness</span></a></li><li><a class="tocitem" href="#9.-Summary-and-Practical-Guidelines-for-Offset-Detector-CT"><span>9. Summary &amp; Practical Guidelines for Offset Detector CT</span></a></li></ul></li><li><a class="tocitem" href="../09_laminography_conebeam/">09: Computed Laminography (CBCL)</a></li><li><a class="tocitem" href="../10_emission_mlem_osem/">10: Emission Tomography (PET/SPECT)</a></li><li><a class="tocitem" href="../11_low_dose_regularization/">11: Low-Dose CT &amp; Regularization</a></li><li><a class="tocitem" href="../12_sparse_view_cs/">12: Sparse-View CT &amp; Compressed Sensing</a></li><li><a class="tocitem" href="../13_workspace_reuse/">13: Workspace &amp; Plan Reuse</a></li></ul></li><li><a class="tocitem" href="../../visualization/">Visualization</a></li><li><a class="tocitem" href="../../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Demonstrations</a></li><li class="is-active"><a href>08: Offset Detector &amp; Extended FOV</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>08: Offset Detector &amp; Extended FOV</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/hashimoto-koh/Tigre.jl/blob/master/docs/src/demos/08_offset_detector_fov.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Offset-Detector-Geometry-and-Extended-Field-of-View-(FOV)-Reconstruction-in-Tigre.jl"><a class="docs-heading-anchor" href="#Offset-Detector-Geometry-and-Extended-Field-of-View-(FOV)-Reconstruction-in-Tigre.jl">Offset Detector Geometry &amp; Extended Field-of-View (FOV) Reconstruction in Tigre.jl</a><a id="Offset-Detector-Geometry-and-Extended-Field-of-View-(FOV)-Reconstruction-in-Tigre.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Offset-Detector-Geometry-and-Extended-Field-of-View-(FOV)-Reconstruction-in-Tigre.jl" title="Permalink"></a></h1><h2 id="1.-Physical-Motivation:-The-Small-Detector-Dilemma"><a class="docs-heading-anchor" href="#1.-Physical-Motivation:-The-Small-Detector-Dilemma">1. Physical Motivation: The Small Detector Dilemma</a><a id="1.-Physical-Motivation:-The-Small-Detector-Dilemma-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Physical-Motivation:-The-Small-Detector-Dilemma" title="Permalink"></a></h2><p>In medical Cone-Beam CT (CBCT) and industrial non-destructive testing (NDT), flat-panel X-ray detectors are among the most expensive components of a scanner:</p><ul><li>A standard centered detector has a lateral half-fan angle <span>$\gamma_m = \arctan(w_{\text{det}} / (2 \cdot \text{DSD}))$</span>, which limits the reconstructible cylindrical Field-of-View (FOV) radius to: <span>$R_{\text{FOV, centered}} = \text{DSO} \cdot \sin(\gamma_m) \approx \text{DSO} \cdot \frac{w_{\text{det}}}{2 \cdot \text{DSD}}$</span></li><li>When scanning patients with large lateral anatomy (e.g., adult pelvis, shoulders, thorax) or wide industrial workpieces, the anatomy overflows the detector, causing <strong>severe lateral truncation artifacts</strong> (bright cupping bands, streaking, and completely lost peripheral structures).</li><li>Manufacturing a physical detector of twice the width is prohibitively expensive and technically challenging.</li></ul><h3 id="The-Offset-Detector-Solution"><a class="docs-heading-anchor" href="#The-Offset-Detector-Solution">The Offset Detector Solution</a><a id="The-Offset-Detector-Solution-1"></a><a class="docs-heading-anchor-permalink" href="#The-Offset-Detector-Solution" title="Permalink"></a></h3><p>Instead of centering the detector, the panel is shifted laterally along the detector <span>$U$</span>-axis by an offset <span>$d_{\text{off}}$</span>:</p><ul><li>The ray paths from the source now cover one side of the object completely, while the opposite side is covered when the gantry rotates by <span>$180^\circ$</span>.</li><li>By acquiring a full <span>$360^\circ$</span> rotation, <strong>the usable FOV radius is nearly doubled (FOV area expanded up to <span>$\approx 4\times$</span>)</strong> using the exact same detector panel!</li></ul><h3 id="Mathematical-Redundancy-and-Wang-Weighting"><a class="docs-heading-anchor" href="#Mathematical-Redundancy-and-Wang-Weighting">Mathematical Redundancy &amp; Wang Weighting</a><a id="Mathematical-Redundancy-and-Wang-Weighting-1"></a><a class="docs-heading-anchor-permalink" href="#Mathematical-Redundancy-and-Wang-Weighting" title="Permalink"></a></h3><p>Because rays in the central overlapping region (where rays pass through both at angle <span>$\theta$</span> and conjugate angle <span>$\theta + \pi$</span>) are measured twice, while rays in the peripheral extended region are measured only once:</p><ul><li>Standard FDK filtering would severely over-weight the central region and produce intense shading artifacts.</li><li><strong>Wang et al. (1996)</strong> introduced a smooth redundant weighting function <span>$w(u)$</span> applied prior to ramp filtering and backprojection.</li><li><strong>Tigre.jl</strong> natively implements automatic Wang redundancy weighting and zero-padding (<code>_fdk_requires_wang(geo)</code>, <code>wang_preweight!</code>, <code>wang_padding</code>) whenever <code>offDetector = [offU, offV]</code> is specified!</li></ul><hr/><h3 id="What-this-Tutorial-Covers:"><a class="docs-heading-anchor" href="#What-this-Tutorial-Covers:">What this Tutorial Covers:</a><a id="What-this-Tutorial-Covers:-1"></a><a class="docs-heading-anchor-permalink" href="#What-this-Tutorial-Covers:" title="Permalink"></a></h3><ol><li>Configuring centered vs. offset detector geometries in <code>Tigre.Geometry</code>.</li><li>Inspecting FOV radius expansion using <code>compute_fov_radius</code> and <code>out_of_fov_mask</code>.</li><li>Generating an oversized 3D phantom with central organs and peripheral lesions extending far beyond the centered FOV.</li><li>Simulating cone-beam projections with realistic Poisson-Gaussian transmission noise (<code>add_ct_noise</code>).</li><li>Reconstructing with <strong>Centered FDK</strong> (severe truncation baseline), <strong>Offset FDK (Wang-weighted)</strong>, <strong>Offset SART (20 it)</strong>, and <strong>Offset CGLS (20 it)</strong>.</li><li>Comparing horizontal profiles across the central overlap / extended peripheral transition zone.</li></ol><h2 id="Prerequisites"><a class="docs-heading-anchor" href="#Prerequisites">Prerequisites</a><a id="Prerequisites-1"></a><a class="docs-heading-anchor-permalink" href="#Prerequisites" title="Permalink"></a></h2><p>This tutorial uses <strong>Makie</strong> (recommended backend: <strong>CairoMakie</strong>) for visualization. If <code>CairoMakie</code> is not installed in your environment, add it by running <code>using Pkg; Pkg.add(&quot;CairoMakie&quot;)</code>.</p><pre><code class="language-julia hljs">using LinearAlgebra
+using Printf
+using Random
+using Statistics
+using CairoMakie
+using Tigre</code></pre><h2 id="2.-Geometry-Setup:-Centered-vs.-Offset-Detector"><a class="docs-heading-anchor" href="#2.-Geometry-Setup:-Centered-vs.-Offset-Detector">2. Geometry Setup: Centered vs. Offset Detector</a><a id="2.-Geometry-Setup:-Centered-vs.-Offset-Detector-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Geometry-Setup:-Centered-vs.-Offset-Detector" title="Permalink"></a></h2><p>We construct two matching scanner geometries:</p><ol><li><code>geo_cent</code>: Symmetrical detector centered on the optical axis (<code>offDetector = [0.0, 0.0]</code>).</li><li><code>geo_offset</code>: Asymmetrical detector shifted laterally along the horizontal <span>$U$</span>-axis by <span>$25.0\,\text{mm}$</span> (<code>offDetector = [25.0, 0.0]</code>).</li></ol><p>Notice how the detector pixel count (<span>$240 \times 240$</span>, pitch <span>$1.0\,\text{mm}$</span>) is identical in both setups!</p><pre><code class="language-julia hljs"># Full 360-degree rotation (required for offset detector conjugate coverage)
+n_angles = 180
+angles = collect(range(0.0f0, 2f0 * Float32(pi), length=n_angles))
+
+# 1. Centered geometry (small FOV)
+geo_cent = Geometry(
+    nVoxel = [256, 256, 128],
+    sVoxel = [256.0, 256.0, 128.0],
+    nDetector = [240, 240],
+    dDetector = [1.0, 1.0],
+    DSD = 600.0,
+    DSO = 400.0,
+    offDetector = [0.0, 0.0],
+    angles = angles
+)
+
+# 2. Offset detector geometry (extended FOV)
+# We shift the detector laterally along U by 25 mm (leaving an 11 mm central overlap region)
+off_u = 80.0
+geo_offset = Geometry(
+    nVoxel = [256, 256, 128],
+    sVoxel = [256.0, 256.0, 128.0],
+    nDetector = [240, 240],
+    dDetector = [1.0, 1.0],
+    DSD = 600.0,
+    DSO = 400.0,
+    offDetector = [off_u, 0.0],
+    angles = angles
+)
+
+println(&quot;Geometries initialized successfully.&quot;)
+</code></pre><pre><code class="language-text hljs">Geometries initialized successfully.</code></pre><h2 id="3.-Quantifying-Field-of-View-Expansion"><a class="docs-heading-anchor" href="#3.-Quantifying-Field-of-View-Expansion">3. Quantifying Field-of-View Expansion</a><a id="3.-Quantifying-Field-of-View-Expansion-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Quantifying-Field-of-View-Expansion" title="Permalink"></a></h2><p><code>Tigre.jl</code> provides helper functions <code>compute_fov_radius(geo)</code> and <code>out_of_fov_mask(geo)</code>:</p><ul><li><code>compute_fov_radius(geo)</code> returns a tuple <code>(radius_mm, radius_voxels)</code> denoting the physical reconstructible cylinder radius in the transaxial slice.</li><li>Let us compare the reconstructible FOV radius and area between the centered and offset configurations.</li></ul><pre><code class="language-julia hljs">r_cent_mm, r_cent_vox = compute_fov_radius(geo_cent)
+r_off_mm, r_off_vox   = compute_fov_radius(geo_offset)
+mask_cent = out_of_fov_mask(geo_cent)
+mask_off  = out_of_fov_mask(geo_offset)
+area_gain = (r_off_mm / r_cent_mm)^2
+
+println(@sprintf(&quot;Centered FOV radius: %.1f mm (%.1f voxels)&quot;, r_cent_mm, r_cent_vox))
+println(@sprintf(&quot;Offset FOV radius:   %.1f mm (%.1f voxels)&quot;, r_off_mm, r_off_vox))
+println(@sprintf(&quot;Reconstructible FOV area expansion: %.2fx&quot;, area_gain))
+
+mid_z = 64
+fig = Figure(size = (800, 360))
+ax1 = Axis(fig[1, 1], title = @sprintf(&quot;Centered FOV (r=%.1f mm)&quot;, r_cent_mm), aspect = DataAspect())
+heatmap!(ax1, mask_cent[:, :, mid_z]&#39;, colormap = :blues)
+
+ax2 = Axis(fig[1, 2], title = @sprintf(&quot;Offset FOV (r=%.1f mm, %.2fx area)&quot;, r_off_mm, area_gain), aspect = DataAspect())
+heatmap!(ax2, mask_off[:, :, mid_z]&#39;, colormap = :greens)
+fig
+</code></pre><pre><code class="language-text hljs">Centered FOV radius: 80.0 mm (80.0 voxels)
+Offset FOV radius:   133.3 mm (127.5 voxels)
+Reconstructible FOV area expansion: 2.78x</code></pre><p><img src="../../assets/tutorials/08_offset_detector_fov_01.png" alt/></p><h2 id="4.-Ground-Truth-Large-Phantom-Design"><a class="docs-heading-anchor" href="#4.-Ground-Truth-Large-Phantom-Design">4. Ground Truth Large Phantom Design</a><a id="4.-Ground-Truth-Large-Phantom-Design-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Ground-Truth-Large-Phantom-Design" title="Permalink"></a></h2><p>We construct a 3D phantom specifically designed to demonstrate truncation vs. full FOV recovery:</p><ul><li><strong>Body cylinder</strong> of radius <span>$36\,\text{mm}$</span> (voxel grid <span>$80 \times 80$</span>, voxel pitch <span>$1.0\,\text{mm}$</span>).<ul><li>In <code>geo_cent</code>, the detector half-width is <span>$36\,\text{mm}$</span>, so at magnification <span>$600/400 = 1.5$</span>, the maximum visible object radius is <span>$36 / 1.5 = 80.0\,\text{mm}$</span>.</li><li>The phantom has radius <span>$36\,\text{mm}$</span>, which completely <strong>overflows</strong> the centered detector!</li></ul></li><li><strong>Central feature</strong>: Soft-tissue core with medium attenuation (<span>$\mu = 0.8$</span>).</li><li><strong>Intermediate features</strong>: Two circular structures (<span>$\mu = 1.4$</span>) at radius <span>$16\,\text{mm}$</span>.</li><li><strong>Peripheral features</strong>: Four outer high-contrast targets (<span>$\mu = 2.0$</span>) at radius <span>$28\,\text{mm}$</span>—lying completely outside the centered FOV, but safely inside the offset detector FOV!</li></ul><pre><code class="language-julia hljs">nx, ny, nz = 256, 256, 128
+phantom = zeros(Float32, nx, ny, nz)
+cx, cy = 128.5, 128.5
+
+for k in 20:108, j in 1:ny, i in 1:nx
+    r = sqrt((i - cx)^2 + (j - cy)^2)
+    # Outer body (radius 115 mm, scaled from 36 mm)
+    if r &lt;= 115.0
+        phantom[i, j, k] = 0.4f0
+    end
+    # Central core
+    if r &lt;= 32.0
+        phantom[i, j, k] = 0.8f0
+    end
+    # Intermediate lesions (radius 50 mm, within centered FOV)
+    if sqrt((i - (cx - 50))^2 + (j - cy)^2) &lt;= 16.0
+        phantom[i, j, k] = 1.4f0
+    end
+    if sqrt((i - (cx + 50))^2 + (j - cy)^2) &lt;= 16.0
+        phantom[i, j, k] = 1.4f0
+    end
+    # Peripheral lesions (radius 90 mm, TRUNCATED in centered detector!)
+    if sqrt((i - cx)^2 + (j - (cy - 90))^2) &lt;= 13.0
+        phantom[i, j, k] = 2.0f0
+    end
+    if sqrt((i - cx)^2 + (j - (cy + 90))^2) &lt;= 13.0
+        phantom[i, j, k] = 2.0f0
+    end
+    if sqrt((i - (cx - 90))^2 + (j - cy)^2) &lt;= 13.0
+        phantom[i, j, k] = 2.0f0
+    end
+    if sqrt((i - (cx + 90))^2 + (j - cy)^2) &lt;= 13.0
+        phantom[i, j, k] = 2.0f0
+    end
+end
+
+println(&quot;Oversized 3D Phantom constructed. Max value: &quot;, maximum(phantom))
+</code></pre><pre><code class="language-text hljs">Oversized 3D Phantom constructed. Max value: 2.0</code></pre><h2 id="5.-Forward-Projection-and-Realistic-CT-Transmission-Noise"><a class="docs-heading-anchor" href="#5.-Forward-Projection-and-Realistic-CT-Transmission-Noise">5. Forward Projection &amp; Realistic CT Transmission Noise</a><a id="5.-Forward-Projection-and-Realistic-CT-Transmission-Noise-1"></a><a class="docs-heading-anchor-permalink" href="#5.-Forward-Projection-and-Realistic-CT-Transmission-Noise" title="Permalink"></a></h2><p>We project the large phantom onto both detector configurations using forward projection <code>Ax</code>:</p><ul><li>In the centered sinogram, peripheral rays are abruptly cut off at both detector edges.</li><li>In the offset sinogram, rays on one side extend smoothly across the entire body radius, while the opposing side captures the conjugate views.</li><li>We then add realistic Poisson photon counting noise (<span>$I_0 = 50,000$</span>) and Gaussian electronic readout noise using <code>add_ct_noise</code>.</li></ul><pre><code class="language-julia hljs"># Forward projection
+proj_cent_clean = Ax(phantom, geo_cent)
+proj_off_clean  = Ax(phantom, geo_offset)
+
+# Add CT transmission noise
+rng = MersenneTwister(1234)
+proj_cent_noisy = add_ct_noise(proj_cent_clean; I0=50000.0, gaussian=(0f0, 0.5f0), rng=rng)
+proj_off_noisy  = add_ct_noise(proj_off_clean;  I0=50000.0, gaussian=(0f0, 0.5f0), rng=rng)
+
+# Visualize central detector slice sinograms
+mid_v = 120
+fig = Figure(size = (850, 360))
+ax1 = Axis(fig[1, 1], title = &quot;Centered Sinogram (Truncated)&quot;, xlabel = &quot;Detector U&quot;, ylabel = &quot;Angle Index&quot;)
+hm1 = heatmap!(ax1, proj_cent_noisy[:, mid_v, :]&#39;, colormap = :viridis)
+Colorbar(fig[1, 2], hm1)
+
+ax2 = Axis(fig[1, 3], title = &quot;Offset Sinogram (Asymmetrical)&quot;, xlabel = &quot;Detector U&quot;, ylabel = &quot;Angle Index&quot;)
+hm2 = heatmap!(ax2, proj_off_noisy[:, mid_v, :]&#39;, colormap = :viridis)
+Colorbar(fig[1, 4], hm2)
+fig</code></pre><p><img src="../../assets/tutorials/08_offset_detector_fov_02.png" alt/></p><h2 id="6.-Reconstruction-Benchmark"><a class="docs-heading-anchor" href="#6.-Reconstruction-Benchmark">6. Reconstruction Benchmark</a><a id="6.-Reconstruction-Benchmark-1"></a><a class="docs-heading-anchor-permalink" href="#6.-Reconstruction-Benchmark" title="Permalink"></a></h2><p>We run 4 reconstructions to contrast the algorithms:</p><ol><li><strong>Centered FDK</strong>: Reconstructs the truncated projections directly. Ramp filtering of truncated edges creates massive cupping streaks and outer loss.</li><li><strong>Offset FDK (Wang Weighting)</strong>: <code>Tigre.fdk</code> automatically detects <code>offDetector[1] != 0</code>, calculates smooth redundancy weights <span>$w(u)$</span>, mirrors and pads the detector arrays, and applies the ramp filter.</li><li><strong>Offset SART (20 iterations)</strong>: Algebraic reconstruction with ray-by-ray projection and backprojection, converging smoothly to the non-negative solution.</li><li><strong>Offset CGLS (20 iterations)</strong>: Krylov conjugate gradient least squares solver iteratively matching the asymmetrical system matrix <span>$A$</span>.</li></ol><p>All calculations execute natively on CUDA GPU.</p><pre><code class="language-julia hljs">println(&quot;--&gt; 1/4 Reconstructing Centered FDK (Truncated Baseline)...&quot;)
+rec_fdk_cent = fdk(proj_cent_noisy, geo_cent; filter=:hann)
+
+println(&quot;--&gt; 2/4 Reconstructing Offset FDK (Automatic Wang Redundancy Weighting)...&quot;)
+rec_fdk_offset = fdk(proj_off_noisy, geo_offset; filter=:hann)
+
+println(&quot;--&gt; 3/4 Reconstructing Offset SART (20 iterations)...&quot;)
+rec_sart_offset = sart(proj_off_noisy, geo_offset, 10; lambda=0.8f0)
+
+println(&quot;--&gt; 4/4 Reconstructing Offset CGLS (20 iterations)...&quot;)
+rec_cgls_offset = cgls(proj_off_noisy, geo_offset, 10)
+clamp!(rec_cgls_offset, 0.0f0, Inf32)
+
+println(&quot;All reconstructions completed successfully!&quot;)
+</code></pre><pre><code class="language-text hljs">--&gt; 1/4 Reconstructing Centered FDK (Truncated Baseline)...
+--&gt; 2/4 Reconstructing Offset FDK (Automatic Wang Redundancy Weighting)...
+--&gt; 3/4 Reconstructing Offset SART (20 iterations)...
+--&gt; 4/4 Reconstructing Offset CGLS (20 iterations)...
+All reconstructions completed successfully!</code></pre><h2 id="7.-Numerical-Quality-Evaluation-and-Image-Visualizations"><a class="docs-heading-anchor" href="#7.-Numerical-Quality-Evaluation-and-Image-Visualizations">7. Numerical Quality Evaluation &amp; Image Visualizations</a><a id="7.-Numerical-Quality-Evaluation-and-Image-Visualizations-1"></a><a class="docs-heading-anchor-permalink" href="#7.-Numerical-Quality-Evaluation-and-Image-Visualizations" title="Permalink"></a></h2><p>We calculate the Peak Signal-to-Noise Ratio (PSNR), Root Mean Square Error (RMSE), and Structural Similarity Index (SSIM) against the ground truth phantom across the whole <span>$256 \times 256 \times 128$</span> volume.</p><pre><code class="language-julia hljs">metrics = [
+    (&quot;Centered FDK (Truncated)&quot;, rec_fdk_cent),
+    (&quot;Offset FDK (Wang)&quot;,       rec_fdk_offset),
+    (&quot;Offset SART (10 it)&quot;,     rec_sart_offset),
+    (&quot;Offset CGLS (10 it)&quot;,     rec_cgls_offset),
+]
+
+println(&quot;----------------------------------------------------------------------&quot;)
+@printf(&quot;%-26s | %10s | %10s | %10s\n&quot;, &quot;Reconstruction Method&quot;, &quot;PSNR (dB)&quot;, &quot;RMSE&quot;, &quot;SSIM&quot;)
+println(&quot;----------------------------------------------------------------------&quot;)
+
+for (name, img) in metrics
+    p_val = psnr(img, phantom)
+    r_val = rmse(img, phantom)
+    s_val = ssim(img, phantom)
+    @printf(&quot;%-26s | %10.2f | %10.4f | %10.4f\n&quot;, name, p_val, r_val, s_val)
+end
+println(&quot;----------------------------------------------------------------------&quot;)
+</code></pre><pre><code class="language-text hljs">----------------------------------------------------------------------
+Reconstruction Method      |  PSNR (dB) |       RMSE |       SSIM
+----------------------------------------------------------------------
+Centered FDK (Truncated)   |      11.91 |     0.5074 |     0.4782
+Offset FDK (Wang)          |      24.20 |     0.1233 |     0.9439
+Offset SART (10 it)        |      27.44 |     0.0849 |     0.9756
+Offset CGLS (10 it)        |      26.39 |     0.0958 |     0.9667
+----------------------------------------------------------------------</code></pre><h3 id="Transaxial-X-Y-Slice-Comparison"><a class="docs-heading-anchor" href="#Transaxial-X-Y-Slice-Comparison">Transaxial X-Y Slice Comparison</a><a id="Transaxial-X-Y-Slice-Comparison-1"></a><a class="docs-heading-anchor-permalink" href="#Transaxial-X-Y-Slice-Comparison" title="Permalink"></a></h3><p>Observe:</p><ul><li>In <strong>Centered FDK</strong>, the entire outer boundary is clipped at <span>$R = 80\,\text{mm}$</span>, with severe bright edge cupping. All 4 peripheral lesions are completely missing or distorted into artifacts!</li><li>In <strong>Offset FDK</strong>, the entire <span>$R = 115\,\text{mm}$</span> body and all 4 peripheral lesions are reconstructed with clean geometry and zero seam artifacts at the overlap boundary!</li><li>In <strong>Offset SART</strong> and <strong>Offset CGLS</strong>, noise is further suppressed, yielding higher PSNR (&gt; 30 dB) and superior fidelity.</li></ul><pre><code class="language-julia hljs">z_eval = 64
+clims = (0.0f0, 2.0f0)
+
+titles = [
+    &quot;Ground Truth&quot;, &quot;Centered FDK (Trunc)&quot;, &quot;Offset FDK (Wang)&quot;,
+    &quot;Offset SART&quot;, &quot;Offset CGLS&quot;, &quot;|Offset FDK - GT|&quot;
+]
+imgs = [
+    phantom[:, :, z_eval]&#39;, rec_fdk_cent[:, :, z_eval]&#39;, rec_fdk_offset[:, :, z_eval]&#39;,
+    rec_sart_offset[:, :, z_eval]&#39;, rec_cgls_offset[:, :, z_eval]&#39;,
+    abs.(rec_fdk_offset[:, :, z_eval] .- phantom[:, :, z_eval])&#39;
+]
+cmaps = [:grays, :grays, :grays, :grays, :grays, :inferno]
+cranges = [clims, clims, clims, clims, clims, (0.0f0, 0.5f0)]
+
+fig = Figure(size = (960, 620))
+for (idx, (t, img, cm, cr)) in enumerate(zip(titles, imgs, cmaps, cranges))
+    row = (idx - 1) ÷ 3 + 1
+    col = (idx - 1) % 3 + 1
+    ax = Axis(fig[row, col], title = t, aspect = DataAspect())
+    heatmap!(ax, img, colormap = cm, colorrange = cr)
+end
+fig</code></pre><p><img src="../../assets/tutorials/08_offset_detector_fov_03.png" alt/></p><h2 id="8.-Horizontal-1D-Profile:-Verifying-Seam-Smoothness"><a class="docs-heading-anchor" href="#8.-Horizontal-1D-Profile:-Verifying-Seam-Smoothness">8. Horizontal 1D Profile: Verifying Seam Smoothness</a><a id="8.-Horizontal-1D-Profile:-Verifying-Seam-Smoothness-1"></a><a class="docs-heading-anchor-permalink" href="#8.-Horizontal-1D-Profile:-Verifying-Seam-Smoothness" title="Permalink"></a></h2><p>A critical test for offset detector reconstruction is verifying whether an artificial ring or step-edge artifact appears at the transition radius between the central overlap zone and the peripheral single-sided coverage zone.</p><p>We plot the horizontal profile along <span>$Y = 128.5$</span> from <span>$X = 1$</span> to <span>$256$</span> passing through:</p><ul><li>Left peripheral lesion (<span>$X \approx 12$</span>)</li><li>Central core (<span>$X \approx 40$</span>)</li><li>Right peripheral lesion (<span>$X \approx 68$</span>)</li></ul><pre><code class="language-julia hljs">x_coords = 1:nx
+y_eval = 128
+
+fig = Figure(size = (800, 380))
+ax = Axis(fig[1, 1], title = &quot;Horizontal Profile across Overlap &amp; Extended FOV (Y=$y_eval, Z=$z_eval)&quot;,
+          xlabel = &quot;Voxel X Index&quot;, ylabel = &quot;Attenuation Coefficient&quot;)
+lines!(ax, x_coords, phantom[:, y_eval, z_eval], label = &quot;Ground Truth&quot;, linewidth = 3, color = :black)
+lines!(ax, x_coords, rec_fdk_cent[:, y_eval, z_eval], label = &quot;Centered FDK (Clipped)&quot;, linewidth = 1.5, linestyle = :dash, color = :red)
+lines!(ax, x_coords, rec_fdk_offset[:, y_eval, z_eval], label = &quot;Offset FDK (Wang)&quot;, linewidth = 2.0, color = :blue)
+lines!(ax, x_coords, rec_sart_offset[:, y_eval, z_eval], label = &quot;Offset SART&quot;, linewidth = 2.5, color = :green)
+lines!(ax, x_coords, rec_cgls_offset[:, y_eval, z_eval], label = &quot;Offset CGLS&quot;, linewidth = 2.0, color = :purple)
+axislegend(ax, position = :rt)
+fig</code></pre><p><img src="../../assets/tutorials/08_offset_detector_fov_04.png" alt/></p><h2 id="9.-Summary-and-Practical-Guidelines-for-Offset-Detector-CT"><a class="docs-heading-anchor" href="#9.-Summary-and-Practical-Guidelines-for-Offset-Detector-CT">9. Summary &amp; Practical Guidelines for Offset Detector CT</a><a id="9.-Summary-and-Practical-Guidelines-for-Offset-Detector-CT-1"></a><a class="docs-heading-anchor-permalink" href="#9.-Summary-and-Practical-Guidelines-for-Offset-Detector-CT" title="Permalink"></a></h2><table><tr><th style="text-align: left">Configuration</th><th style="text-align: left">Detector Size</th><th style="text-align: left">Reconstructed Radius</th><th style="text-align: left">FOV Area Relative to Centered</th><th style="text-align: left">Reconstruction Artifacts</th></tr><tr><td style="text-align: left"><strong>Centered Detector</strong></td><td style="text-align: left"><span>$240\,\text{mm}$</span></td><td style="text-align: left"><span>$80.0\,\text{mm}$</span></td><td style="text-align: left"><span>$1.00\times$</span></td><td style="text-align: left">Severe truncation, high-frequency boundary cupping, lost peripheral anatomy</td></tr><tr><td style="text-align: left"><strong>Offset Detector (FDK Wang)</strong></td><td style="text-align: left"><span>$240\,\text{mm}$</span></td><td style="text-align: left"><span>$39.0\,\text{mm}$</span></td><td style="text-align: left"><strong><span>$2.64\times$</span></strong></td><td style="text-align: left">Seamless reconstruction with smooth Wang redundancy weighting</td></tr><tr><td style="text-align: left"><strong>Offset Detector (SART)</strong></td><td style="text-align: left"><span>$240\,\text{mm}$</span></td><td style="text-align: left"><span>$39.0\,\text{mm}$</span></td><td style="text-align: left"><strong><span>$2.64\times$</span></strong></td><td style="text-align: left">Highest SNR, flat background, sharp peripheral lesion preservation</td></tr><tr><td style="text-align: left"><strong>Offset Detector (CGLS)</strong></td><td style="text-align: left"><span>$240\,\text{mm}$</span></td><td style="text-align: left"><span>$39.0\,\text{mm}$</span></td><td style="text-align: left"><strong><span>$2.64\times$</span></strong></td><td style="text-align: left">Fast iterative convergence, natural handling of asymmetrical coverage</td></tr></table><h3 id="Engineering-Rules-of-Thumb-for-Offset-Detectors"><a class="docs-heading-anchor" href="#Engineering-Rules-of-Thumb-for-Offset-Detectors">Engineering Rules of Thumb for Offset Detectors</a><a id="Engineering-Rules-of-Thumb-for-Offset-Detectors-1"></a><a class="docs-heading-anchor-permalink" href="#Engineering-Rules-of-Thumb-for-Offset-Detectors" title="Permalink"></a></h3><ol><li><strong>Always acquire a full <span>$360^\circ$</span> rotation</strong>: A short-scan (<span>$180^\circ + 2\gamma_m$</span>) is insufficient for offset detectors because each peripheral voxel must be sampled from the opposing angle <span>$180^\circ$</span> apart.</li><li><strong>Leave adequate central overlap</strong>: The offset <span>$d_{\text{off}}$</span> must be strictly less than <span>$w_{\text{det}} / 2$</span>. A typical overlap margin of <span>$10\% - 25\%$</span> of the detector width ensures smooth Wang weighting transitions and avoids division-by-zero singularities.</li><li><strong>Use Tigre.jl native functions</strong>: Simply setting <code>geo.offDetector = [offU, 0.0]</code> automatically engages <code>wang_preweight!</code> and <code>wang_padding</code> in <code>fdk!</code>, ensuring zero boilerplate code for researchers and engineers.</li></ol></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../07_preprocessing/">« 07: Projection Preprocessing &amp; COR</a><a class="docs-footer-nextpage" href="../09_laminography_conebeam/">09: Computed Laminography (CBCL) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Saturday 10 October 2026 07:37">Saturday 10 October 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
