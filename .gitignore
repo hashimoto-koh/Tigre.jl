@@ -1,0 +1,19 @@
+/deps/src/
+/deps/usr/
+/deps/build.log
+/docs/build/
+/native/
+/repro/
+/scratch/
+__pycache__/
+.ipynb_checkpoints/
+
+# Default Julia ignores
+/Manifest.toml
+/docs/Manifest.toml
+
+# Local development files
+/AGENTS.md
+/private/
+/.codex/
+/.vscode/

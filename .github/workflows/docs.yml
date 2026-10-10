@@ -1,0 +1,43 @@
+name: Docs
+
+# Auto-deploy is disabled while the repository is private.
+# GitHub Pages requires a public repo (or Enterprise plan).
+# Uncomment the triggers below when the repository is made public.
+on:
+  workflow_dispatch:
+#  push:
+#    branches:
+#      - master
+#    tags: '*'
+#  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      statuses: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install CUDA toolkit
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nvidia-cuda-toolkit
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.11'
+      - uses: julia-actions/cache@v2
+      - name: Build package
+        run: julia --startup-file=no --project=. -e 'using Pkg; Pkg.build()'
+      - name: Install docs dependencies
+        run: julia --startup-file=no --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+      - name: Build and deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+        run: julia --startup-file=no --project=docs docs/make.jl

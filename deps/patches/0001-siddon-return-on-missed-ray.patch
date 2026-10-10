@@ -1,0 +1,34 @@
+diff --git a/Common/CUDA/Siddon_projection.cu b/Common/CUDA/Siddon_projection.cu
+index 2a025f8c..587583ea 100644
+--- a/Common/CUDA/Siddon_projection.cu
++++ b/Common/CUDA/Siddon_projection.cu
+@@ -176,8 +176,10 @@ __global__ void kernelPixelDetector( Geometry geo,
+     float aM=fminf(fminf(axM,ayM),azM);
+ 
+     // line intersects voxel space ->   am<aM
+-    if (am>=aM)
+-        detector[idx]=0;
++    if (am>=aM) {
++        detector[idx]=0;
++        return;
++    }
+ 
+     // Compute max/min image INDEX for intersection eq(11-19)
+     // Discussion about ternary operator in CUDA: https://stackoverflow.com/questions/7104384/in-cuda-why-is-a-b010-more-efficient-than-an-if-else-version
+diff --git a/Common/CUDA/Siddon_projection_parallel.cu b/Common/CUDA/Siddon_projection_parallel.cu
+index 25a07e9d..743c182d 100644
+--- a/Common/CUDA/Siddon_projection_parallel.cu
++++ b/Common/CUDA/Siddon_projection_parallel.cu
+@@ -180,8 +180,10 @@ __global__ void kernelPixelDetector_parallel( Geometry geo,
+     float aM=(fminf(axM,ayM));
+ 
+     // line intersects voxel space ->   am<aM
+-    if (am>=aM)
+-        detector[idx]=0.0f;
++    if (am>=aM) {
++        detector[idx]=0.0f;
++        return;
++    }
+ 
+     // Compute max/min image INDEX for intersection eq(11-19)
+     // Discussion about ternary operator in CUDA: https://stackoverflow.com/questions/7104384/in-cuda-why-is-a-b010-more-efficient-than-an-if-else-version

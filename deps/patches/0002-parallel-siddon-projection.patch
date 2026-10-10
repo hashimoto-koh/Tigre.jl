@@ -1,0 +1,655 @@
+diff --git a/Common/CUDA/Siddon_projection_parallel.cu b/Common/CUDA/Siddon_projection_parallel.cu
+index af69ccb..607199f 100644
+--- a/Common/CUDA/Siddon_projection_parallel.cu
++++ b/Common/CUDA/Siddon_projection_parallel.cu
+@@ -152,124 +152,257 @@ __global__ void kernelPixelDetector_parallel( Geometry geo,
+     ray.x=pixel1D.x-source.x;
+     ray.y=pixel1D.y-source.y;
+     ray.z=pixel1D.z-source.z;
+-    // This variables are ommited because
+-    // bx,by,bz ={0,0,0}
+-    // dx,dy,dz ={1,1,1}
+-    // compute parameter values for x-ray parametric equation. eq(3-10)
+-    float axm,aym,azm;
+-    float axM,ayM,azM;
+-    
+-    /**************************************
+-     *
+-     *
+-     * Problem. In paralel beam, often ray.y or ray.x=0;
+-     * This leads to infinities progpagating and breaking everything.
+-     *
+-     * We need to fix it.
+-     *
+-     ***************************************/
+-    
+-    // In the paper Nx= number of X planes-> Nvoxel+1
+-    axm=fminf(-source.x/ray.x,(geo.nVoxelX-source.x)/ray.x);
+-    aym=fminf(-source.y/ray.y,(geo.nVoxelY-source.y)/ray.y);
+-//     azm=min(-source.z/ray.z,(geo.nVoxelZ-source.z)/ray.z);
+-    axM=fmaxf(-source.x/ray.x,(geo.nVoxelX-source.x)/ray.x);
+-    ayM=fmaxf(-source.y/ray.y,(geo.nVoxelY-source.y)/ray.y);
+-//     azM=max(-source.z/ray.z,(geo.nVoxelZ-source.z)/ray.z);
+-    float am=(fmaxf(axm,aym));
+-    float aM=(fminf(axM,ayM));
++
++    float axm, aym, azm;
++    float axM, ayM, azM;
++
++    if (ray.x == 0.0f) {
++        if (source.x >= 0.0f && source.x < geo.nVoxelX) {
++            axm = -INFINITY;
++            axM = INFINITY;
++        } else {
++            axm = INFINITY;
++            axM = -INFINITY;
++        }
++    } else {
++        float t1 = -source.x / ray.x;
++        float t2 = (geo.nVoxelX - source.x) / ray.x;
++        axm = fminf(t1, t2);
++        axM = fmaxf(t1, t2);
++    }
++
++    if (ray.y == 0.0f) {
++        if (source.y >= 0.0f && source.y < geo.nVoxelY) {
++            aym = -INFINITY;
++            ayM = INFINITY;
++        } else {
++            aym = INFINITY;
++            ayM = -INFINITY;
++        }
++    } else {
++        float t1 = -source.y / ray.y;
++        float t2 = (geo.nVoxelY - source.y) / ray.y;
++        aym = fminf(t1, t2);
++        ayM = fmaxf(t1, t2);
++    }
++
++    if (ray.z == 0.0f) {
++        if (source.z >= 0.0f && source.z < geo.nVoxelZ) {
++            azm = -INFINITY;
++            azM = INFINITY;
++        } else {
++            azm = INFINITY;
++            azM = -INFINITY;
++        }
++    } else {
++        float t1 = -source.z / ray.z;
++        float t2 = (geo.nVoxelZ - source.z) / ray.z;
++        azm = fminf(t1, t2);
++        azM = fmaxf(t1, t2);
++    }
++
++    float am = fmaxf(fmaxf(axm, aym), azm);
++    float aM = fminf(fminf(axM, ayM), azM);
+     
+     // line intersects voxel space ->   am<aM
+-    if (am>=aM) {
+-        detector[idx]=0.0f;
++    if (am >= aM) {
++        detector[idx] = 0.0f;
+         return;
+     }
+     
+     // Compute max/min image INDEX for intersection eq(11-19)
+-    // Discussion about ternary operator in CUDA: https://stackoverflow.com/questions/7104384/in-cuda-why-is-a-b010-more-efficient-than-an-if-else-version
+-    float imin,imax,jmin,jmax;
++    float imin, imax, jmin, jmax, kmin, kmax;
++    float ax, ay, az;
++    float axu, ayu, azu;
++    float iu, ju, ku;
++    unsigned long Npx = 0, Npy = 0, Npz = 0;
++
+     // for X
+-    if( source.x<pixel1D.x){
+-        imin=(am==axm)? 1.0f             : ceilf (source.x+am*ray.x);
+-        imax=(aM==axM)? geo.nVoxelX      : floorf(source.x+aM*ray.x);
+-    }else{
+-        imax=(am==axm)? geo.nVoxelX-1.0f : floorf(source.x+am*ray.x);
+-        imin=(aM==axM)? 0.0f             : ceilf (source.x+aM*ray.x);
++    if (ray.x == 0.0f) {
++        ax = INFINITY;
++        axu = INFINITY;
++        iu = 0.0f;
++        Npx = 0;
++    } else {
++        if (source.x < pixel1D.x) {
++            imin = (am == axm) ? 1.0f        : ceilf(source.x + am * ray.x);
++            imax = (aM == axM) ? geo.nVoxelX : floorf(source.x + aM * ray.x);
++            ax = (imin - source.x) / ray.x;
++            iu = 1.0f;
++            while (ax <= am && imin <= imax) {
++                imin += 1.0f;
++                ax = (imin - source.x) / ray.x;
++            }
++            while (imax >= imin && ((imax - source.x) / ray.x) > aM) {
++                imax -= 1.0f;
++            }
++        } else {
++            imax = (am == axm) ? geo.nVoxelX - 1.0f : floorf(source.x + am * ray.x);
++            imin = (aM == axM) ? 0.0f               : ceilf(source.x + aM * ray.x);
++            ax = (imax - source.x) / ray.x;
++            iu = -1.0f;
++            while (ax <= am && imax >= imin) {
++                imax -= 1.0f;
++                ax = (imax - source.x) / ray.x;
++            }
++            while (imax >= imin && ((imin - source.x) / ray.x) > aM) {
++                imin += 1.0f;
++            }
++        }
++        ax = (isinf(ax)) ? fabsf(ax) : ax;
++        axu = 1.0f / fabsf(ray.x);
++        if (imax >= imin) {
++            Npx = (unsigned long)(imax - imin + 1.0f);
++        } else {
++            Npx = 0;
++            ax = INFINITY;
++        }
+     }
++
+     // for Y
+-    if( source.y<pixel1D.y){
+-        jmin=(am==aym)? 1.0f             : ceilf (source.y+am*ray.y);
+-        jmax=(aM==ayM)? geo.nVoxelY      : floorf(source.y+aM*ray.y);
+-    }else{
+-        jmax=(am==aym)? geo.nVoxelY-1.0f : floorf(source.y+am*ray.y);
+-        jmin=(aM==ayM)? 0.0f             : ceilf (source.y+aM*ray.y);
++    if (ray.y == 0.0f) {
++        ay = INFINITY;
++        ayu = INFINITY;
++        ju = 0.0f;
++        Npy = 0;
++    } else {
++        if (source.y < pixel1D.y) {
++            jmin = (am == aym) ? 1.0f        : ceilf(source.y + am * ray.y);
++            jmax = (aM == ayM) ? geo.nVoxelY : floorf(source.y + aM * ray.y);
++            ay = (jmin - source.y) / ray.y;
++            ju = 1.0f;
++            while (ay <= am && jmin <= jmax) {
++                jmin += 1.0f;
++                ay = (jmin - source.y) / ray.y;
++            }
++            while (jmax >= jmin && ((jmax - source.y) / ray.y) > aM) {
++                jmax -= 1.0f;
++            }
++        } else {
++            jmax = (am == aym) ? geo.nVoxelY - 1.0f : floorf(source.y + am * ray.y);
++            jmin = (aM == ayM) ? 0.0f               : ceilf(source.y + aM * ray.y);
++            ay = (jmax - source.y) / ray.y;
++            ju = -1.0f;
++            while (ay <= am && jmax >= jmin) {
++                jmax -= 1.0f;
++                ay = (jmax - source.y) / ray.y;
++            }
++            while (jmax >= jmin && ((jmin - source.y) / ray.y) > aM) {
++                jmin += 1.0f;
++            }
++        }
++        ay = (isinf(ay)) ? fabsf(ay) : ay;
++        ayu = 1.0f / fabsf(ray.y);
++        if (jmax >= jmin) {
++            Npy = (unsigned long)(jmax - jmin + 1.0f);
++        } else {
++            Npy = 0;
++            ay = INFINITY;
++        }
++    }
++
++    // for Z
++    if (ray.z == 0.0f) {
++        az = INFINITY;
++        azu = INFINITY;
++        ku = 0.0f;
++        Npz = 0;
++    } else {
++        if (source.z < pixel1D.z) {
++            kmin = (am == azm) ? 1.0f        : ceilf(source.z + am * ray.z);
++            kmax = (aM == azM) ? geo.nVoxelZ : floorf(source.z + aM * ray.z);
++            az = (kmin - source.z) / ray.z;
++            ku = 1.0f;
++            while (az <= am && kmin <= kmax) {
++                kmin += 1.0f;
++                az = (kmin - source.z) / ray.z;
++            }
++            while (kmax >= kmin && ((kmax - source.z) / ray.z) > aM) {
++                kmax -= 1.0f;
++            }
++        } else {
++            kmax = (am == azm) ? geo.nVoxelZ - 1.0f : floorf(source.z + am * ray.z);
++            kmin = (aM == azM) ? 0.0f               : ceilf(source.z + aM * ray.z);
++            az = (kmax - source.z) / ray.z;
++            ku = -1.0f;
++            while (az <= am && kmax >= kmin) {
++                kmax -= 1.0f;
++                az = (kmax - source.z) / ray.z;
++            }
++            while (kmax >= kmin && ((kmin - source.z) / ray.z) > aM) {
++                kmin += 1.0f;
++            }
++        }
++        az = (isinf(az)) ? fabsf(az) : az;
++        azu = 1.0f / fabsf(ray.z);
++        if (kmax >= kmin) {
++            Npz = (unsigned long)(kmax - kmin + 1.0f);
++        } else {
++            Npz = 0;
++            az = INFINITY;
++        }
+     }
+-//     // for Z
+-//     if( source.z<pixel1D.z){
+-//         kmin=(am==azm)? 1             : ceilf (source.z+am*ray.z);
+-//         kmax=(aM==azM)? geo.nVoxelZ : floorf(source.z+aM*ray.z);
+-//     }else{
+-//         kmax=(am==azm)? geo.nVoxelZ-1 : floorf(source.z+am*ray.z);
+-//         kmin=(aM==azM)? 0             : ceilf (source.z+aM*ray.z);
+-//     }
+-    
+-    // get intersection point N1. eq(20-21) [(also eq 9-10)]
+-    float ax,ay;
+-    ax=(source.x<pixel1D.x)?  (imin-source.x)/(ray.x+0.000000000001f)  :  (imax-source.x)/(ray.x+0.000000000001f);
+-    ay=(source.y<pixel1D.y)?  (jmin-source.y)/(ray.y+0.000000000001f)  :  (jmax-source.y)/(ray.y+0.000000000001f);
+-    ay = (ray.y==0.0f)? 1e11f : ay;
+-    ax = (ray.x==0.0f)? 1e11f : ax;
+-//     az=(source.z<pixel1D.z)?  (kmin-source.z)/ray.z  :  (kmax-source.z)/ray.z;
+-    
+-    
+     
+     // get index of first intersection. eq (26) and (19)
+-    unsigned long i,j,k;
+-    float aminc=fminf(ax,ay);
+-    i=(unsigned long)floorf(source.x+ (aminc+am)/2*ray.x);
+-    j=(unsigned long)floorf(source.y+ (aminc+am)/2*ray.y);
+-    k=(unsigned long)floorf(source.z+ (aminc+am)/2*ray.z);
+-//     k=(int)source.z;
++    unsigned long i, j, k;
++    float aminc = fminf(fminf(ax, ay), az);
++
++    // X
++    if (ray.x == 0.0f) {
++        i = (unsigned long)fmaxf(0.0f, fminf(floorf(source.x), geo.nVoxelX - 1.0f));
++    } else if (source.x < pixel1D.x) {
++        i = (unsigned long)fmaxf(0.0f, fminf(imin - 1.0f, geo.nVoxelX - 1.0f));
++    } else {
++        i = (unsigned long)fmaxf(0.0f, fminf(imax, geo.nVoxelX - 1.0f));
++    }
++
++    // Y
++    if (ray.y == 0.0f) {
++        j = (unsigned long)fmaxf(0.0f, fminf(floorf(source.y), geo.nVoxelY - 1.0f));
++    } else if (source.y < pixel1D.y) {
++        j = (unsigned long)fmaxf(0.0f, fminf(jmin - 1.0f, geo.nVoxelY - 1.0f));
++    } else {
++        j = (unsigned long)fmaxf(0.0f, fminf(jmax, geo.nVoxelY - 1.0f));
++    }
++
++    // Z
++    if (ray.z == 0.0f) {
++        k = (unsigned long)fmaxf(0.0f, fminf(floorf(source.z), geo.nVoxelZ - 1.0f));
++    } else if (source.z < pixel1D.z) {
++        k = (unsigned long)fmaxf(0.0f, fminf(kmin - 1.0f, geo.nVoxelZ - 1.0f));
++    } else {
++        k = (unsigned long)fmaxf(0.0f, fminf(kmax, geo.nVoxelZ - 1.0f));
++    }
++
+     // Initialize
+-    float ac=am;
+-    //eq (28), unit angles
+-    float axu,ayu;
+-    axu=1.0f/fabsf(ray.x);
+-    ayu=1.0f/fabsf(ray.y);
+-//     azu=1/abs(ray.z);
+-    // eq(29), direction of update
+-    float iu,ju;
+-    iu=(source.x< pixel1D.x)? 1.0f : -1.0f;
+-    ju=(source.y< pixel1D.y)? 1.0f : -1.0f;
+-//     ku=(source.z< pixel1D.z)? 1 : -1;
+-    
+-    float maxlength=sqrtf(ray.x*ray.x*geo.dVoxelX*geo.dVoxelX+ray.y*ray.y*geo.dVoxelY*geo.dVoxelY);//+ray.z*ray.z*geo.dVoxelZ*geo.dVoxelZ);
+-    float sum=0.0f;
+-    unsigned long Np=(imax-imin+1)+(jmax-jmin+1);//+(kmax-kmin+1); // Number of intersections
++    float ac = am;
++
++    float maxlength = sqrtf(ray.x * ray.x * geo.dVoxelX * geo.dVoxelX + ray.y * ray.y * geo.dVoxelY * geo.dVoxelY + ray.z * ray.z * geo.dVoxelZ * geo.dVoxelZ);
++    float sum = 0.0f;
++    unsigned long Np = Npx + Npy + Npz; // Number of intersections
+     // Go iterating over the line, intersection by intersection. If double point, no worries, 0 will be computed
+-    i+=0.5f;
+-    j+=0.5f;
+-    k+=0.5f;
+-    // detector[idx]=aminc;
+-    // return;
++    i += 0.5f;
++    j += 0.5f;
++    k += 0.5f;
++
+     for (unsigned long ii=0;ii<Np;ii++){
+         if (ax==aminc){
+-            sum+=(ax-ac)*tex3D<float>(tex, i, j, k);//(ax-ac)*
++            sum+=(ax-ac)*tex3D<float>(tex, i, j, k);
+             i=i+iu;
+             ac=ax;
+             ax+=axu;
+         }else if(ay==aminc){
+-            sum+=(ay-ac)*tex3D<float>(tex, i, j, k);//(ay-ac)*
++            sum+=(ay-ac)*tex3D<float>(tex, i, j, k);
+             j=j+ju;
+             ac=ay;
+             ay+=ayu;
+-//         }else if(az==aminc){
+-//             sum+=(az-ac)*tex3D<float>(tex, i+0.5, j+0.5, k+0.5);
+-//             k=k+ku;
+-//             ac=az;
+-//             az+=azu;
++        }else if(az==aminc){
++            sum+=(az-ac)*tex3D<float>(tex, i, j, k);
++            k=k+ku;
++            ac=az;
++            az+=azu;
+         }
+-        aminc=fminf(ay,ax);
++        aminc=fminf(fminf(ay,ax),az);
+     }
+     detector[idx]=maxlength*sum;
+ }
+@@ -425,17 +558,16 @@ void computeDeltas_Siddon_parallel(Geometry geo, float angles,int i, Point3D* uv
+     //S doesnt need to chagne
+     
+     
+-    //3: Rotate (around z)!
+-    Point3D Pfinal, Pfinalu0, Pfinalv0;
+-    
+-    Pfinal.x  =P.x*cos(geo.alpha)-P.y*sin(geo.alpha);       Pfinal.y  =P.y*cos(geo.alpha)+P.x*sin(geo.alpha);       Pfinal.z  =P.z;
+-    Pfinalu0.x=Pu0.x*cos(geo.alpha)-Pu0.y*sin(geo.alpha);   Pfinalu0.y=Pu0.y*cos(geo.alpha)+Pu0.x*sin(geo.alpha);   Pfinalu0.z=Pu0.z;
+-    Pfinalv0.x=Pv0.x*cos(geo.alpha)-Pv0.y*sin(geo.alpha);   Pfinalv0.y=Pv0.y*cos(geo.alpha)+Pv0.x*sin(geo.alpha);   Pfinalv0.z=Pv0.z;
++    //3: Rotate using full Euler angles (ZYZ convention: alpha, theta, psi)
++    Point3D Pfinal = P;
++    Point3D Pfinalu0 = Pu0;
++    Point3D Pfinalv0 = Pv0;
++    Point3D S2 = S;
+     
+-    Point3D S2;
+-    S2.x=S.x*cos(geo.alpha)-S.y*sin(geo.alpha);
+-    S2.y=S.y*cos(geo.alpha)+S.x*sin(geo.alpha);
+-    S2.z=S.z;
++    eulerZYZ(geo, &Pfinal);
++    eulerZYZ(geo, &Pfinalu0);
++    eulerZYZ(geo, &Pfinalv0);
++    eulerZYZ(geo, &S2);
+     
+     //2: Offset image (instead of offseting image, -offset everything else)
+     
+diff --git a/Python/tests/test_parallel_siddon_euler.py b/Python/tests/test_parallel_siddon_euler.py
+new file mode 100644
+index 0000000..328e12c
+--- /dev/null
++++ b/Python/tests/test_parallel_siddon_euler.py
+@@ -0,0 +1,266 @@
++import numpy as np
++import pytest
++import tigre
++
++
++def test_parallel_siddon_z_boundary_sampling():
++    """Verify that Z boundary rays match the expected point-texture sampling.
++
++    At offOrigin Z = 0.5 (lower boundary), pixel [0, 15] must be inside volume (value = 32.0).
++    At offOrigin Z = -0.5 (upper boundary), pixel [31, 15] must be outside volume (value = 0.0),
++    consistent with baseline behavior.
++    """
++    geo = tigre.geometry(mode="parallel", nVoxel=np.array([32, 32, 32]))
++    geo.dVoxel = np.array([1.0, 1.0, 1.0])
++    geo.sVoxel = geo.nVoxel * geo.dVoxel
++    geo.dDetector = np.array([1.0, 1.0])
++    geo.nDetector = np.array([32, 32])
++    geo.sDetector = geo.nDetector * geo.dDetector
++    img = np.ones(geo.nVoxel, dtype=np.float32)
++    angles = np.array([[0.0, 0.0, 0.0]], dtype=np.float32)
++
++    # 1. Lower boundary check (offOrigin Z = 0.5)
++    geo.offOrigin = np.array([0.5, 0.0, 0.0])  # [Z, Y, X] in Python
++    val_lower = tigre.Ax(img, geo, angles, projection_type="Siddon")[0, 0, 15]
++    assert np.isclose(val_lower, 32.0, atol=1e-5), f"Lower boundary expected 32.0, got {val_lower}"
++
++    # 2. Upper boundary check (offOrigin Z = -0.5)
++    geo.offOrigin = np.array([-0.5, 0.0, 0.0])
++    val_upper = tigre.Ax(img, geo, angles, projection_type="Siddon")[0, 31, 15]
++    assert np.isclose(val_upper, 0.0, atol=1e-5), f"Upper boundary expected 0.0, got {val_upper}"
++
++
++def test_parallel_siddon_grazing_and_cardinal_initial_voxels():
++    """Verify that rays grazing voxel boundaries or entering along cardinal angles
++    do not misidentify initial voxels due to single-precision rounding.
++
++    Tests multiple challenging orientations:
++    1. theta = pi/2, pixel [35, 14]: grazes X = 30 face (~5.700).
++    2. alpha = -pi/2, theta = pi/2, psi = 0.13, pixel [27, 37]: entry t matches Y face (~5.727).
++    3. alpha = pi, theta = -pi/2, psi = 0.4, pixel [16, 38]: entry t matches X face (~10.173).
++    """
++    geo = tigre.geometry(mode="parallel", nVoxel=np.array([24, 32, 40]))
++    geo.dVoxel = np.array([0.8, 1.1, 0.7])
++    geo.sVoxel = geo.nVoxel * geo.dVoxel
++    geo.DSO, geo.DSD = np.float32(100), np.float32(200)
++    geo.nDetector = np.array([45, 55])
++    geo.dDetector = np.array([0.7, 0.9])
++    geo.sDetector = geo.nDetector * geo.dDetector
++    geo.offOrigin = np.array([0.7, -1.3, 2.1])
++
++    img = np.zeros(geo.nVoxel, dtype=np.float32)
++    img[4:18, 6:26, 10:30] = 1.0
++
++    cases = [
++        ([[0.0, np.pi / 2, 0.0]], (35, 14), 5.700),
++        ([[-np.pi / 2, np.pi / 2, 0.13]], (27, 37), 5.727),
++        ([[np.pi, -np.pi / 2, 0.4]], (16, 38), 10.173),
++    ]
++
++    for angles, pixel, expected_val in cases:
++        angles_arr = np.array(angles, dtype=np.float32)
++        val = tigre.Ax(img, geo, angles_arr, projection_type="Siddon")[0][pixel]
++        assert np.isclose(val, expected_val, atol=0.01), (
++            f"Case {angles} pixel {pixel} failed: expected ~{expected_val}, got {val}"
++        )
++
++
++def test_parallel_siddon_small_angle_sensitivity():
++    """Verify that small non-zero tilt angles are not truncated by hardcoded epsilon guards.
++
++    For small theta (1e-5, 2e-5) with offOrigin Z=0.5001, ray [0, 15] crosses the Z boundary.
++    The expected values (6.0951 and 10.9922) are regression values computed with TIGRE single-precision
++    host endpoint geometry. An analytical ray-box intersection in exact double precision yields ~5.998
++    and ~10.999; atol=0.05 accounts for single-precision endpoint rounding while strictly guarding
++    against truncation to zero or full-slab integration (32.0).
++    """
++    geo = tigre.geometry(mode="parallel", nVoxel=np.array([32, 32, 32]))
++    geo.dVoxel = np.array([1.0, 1.0, 1.0])
++    geo.sVoxel = geo.nVoxel * geo.dVoxel
++    geo.dDetector = np.array([1.0, 1.0])
++    geo.nDetector = np.array([32, 32])
++    geo.sDetector = geo.nDetector * geo.dDetector
++    geo.offOrigin = np.array([0.5001, 0.0, 0.0])
++
++    img = np.ones(geo.nVoxel, dtype=np.float32)
++
++    # theta = 1e-5
++    angles_1 = np.array([[0.0, 1e-5, 0.0]], dtype=np.float32)
++    p_1 = tigre.Ax(img, geo, angles_1, projection_type="Siddon")[0]
++    val_1 = p_1[0, 15]
++    assert np.isclose(val_1, 6.0951, atol=0.05), f"Small angle ray truncated: {val_1}"
++
++    # theta = 2e-5
++    angles_2 = np.array([[0.0, 2e-5, 0.0]], dtype=np.float32)
++    p_2 = tigre.Ax(img, geo, angles_2, projection_type="Siddon")[0]
++    val_2 = p_2[0, 15]
++    assert np.isclose(val_2, 10.9922, atol=0.05), f"Small angle ray mismatch: {val_2}"
++
++
++def test_parallel_siddon_euler_sensitivity_nondegenerate():
++    """Verify non-degenerate 3D Euler angle sensitivity with an asymmetric 3D volume.
++
++    Under non-zero theta, varying psi must independently alter the projection.
++    """
++    geo = tigre.geometry(mode="parallel", nVoxel=np.array([24, 32, 40]))
++    img = np.zeros(geo.nVoxel, dtype=np.float32)
++    img[4:18, 6:26, 10:30] = 1.0
++
++    # Under non-zero theta=0.3, vary psi
++    angles_psi0 = np.array([[0.2, 0.3, 0.0]], dtype=np.float32)
++    angles_psi1 = np.array([[0.2, 0.3, 0.4]], dtype=np.float32)
++
++    p_psi0 = tigre.Ax(img, geo, angles_psi0, projection_type="Siddon")
++    p_psi1 = tigre.Ax(img, geo, angles_psi1, projection_type="Siddon")
++
++    diff_psi = np.max(np.abs(p_psi0 - p_psi1))
++    assert diff_psi > 1.0, f"psi rotation under non-zero theta had insufficient effect: {diff_psi}"
++
++
++def _analytical_reference(geo, angles, start, end):
++    """Independent analytical ray-box intersection in physical coordinates."""
++    def rz(a):
++        c, s = np.cos(a), np.sin(a)
++        return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
++
++    def ry(a):
++        c, s = np.cos(a), np.sin(a)
++        return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
++
++    def rx(a):
++        c, s = np.cos(a), np.sin(a)
++        return np.array([[1, 0, 0], [0, c, -s], [0, s, c]])
++
++    nd = geo.nDetector
++    v, u = np.indices(nd)
++    yy = (u - nd[1] / 2 + 0.5) * geo.dDetector[1]
++    zz = (v - nd[0] / 2 + 0.5) * geo.dDetector[0]
++    points = np.stack([np.zeros_like(yy), yy, zz], axis=-1)
++    offset = np.asarray(geo.offOrigin)[::-1]
++    lower = np.asarray(start)[::-1] * geo.dVoxel[::-1] - geo.sVoxel[::-1] / 2 + offset
++    upper = np.asarray(end)[::-1] * geo.dVoxel[::-1] - geo.sVoxel[::-1] / 2 + offset
++    ans = []
++    yaw, pitch, roll = geo.rotDetector
++    detector_rotation = rz(roll) @ ry(pitch) @ rx(yaw)
++
++    for alpha, theta, psi in angles:
++        rotation = rz(float(alpha)) @ ry(float(theta)) @ rz(float(psi))
++        source = points @ detector_rotation.T
++        pixel = source.copy()
++        source[..., 0] += geo.DSO
++        pixel[..., 0] -= geo.DSD - geo.DSO
++        pixel[..., 1] += geo.offDetector[1]
++        pixel[..., 2] += geo.offDetector[0]
++        source = source @ rotation.T
++        pixel = pixel @ rotation.T
++        direction = pixel - source
++        lo = np.full(nd, -np.inf)
++        hi = np.full(nd, np.inf)
++        for k in range(3):
++            with np.errstate(divide="ignore", invalid="ignore"):
++                t1 = (lower[k] - source[..., k]) / direction[..., k]
++                t2 = (upper[k] - source[..., k]) / direction[..., k]
++            zero = direction[..., k] == 0
++            inside = (source[..., k] >= lower[k]) & (source[..., k] < upper[k])
++            aa = np.where(zero, np.where(inside, -np.inf, np.inf), np.minimum(t1, t2))
++            bb = np.where(zero, np.where(inside, np.inf, -np.inf), np.maximum(t1, t2))
++            lo = np.maximum(lo, aa)
++            hi = np.minimum(hi, bb)
++        ans.append(np.maximum(0, hi - lo) * np.linalg.norm(direction, axis=-1))
++    return np.array(ans)
++
++
++def test_parallel_siddon_independent_analytical_ground_truth():
++    """Verify Siddon projection against an independent physical-coordinate analytical ground truth.
++
++    Evaluates 13 views with arbitrary 3D Euler angles, anisotropic voxels, off-center phantom,
++    and image offsets.
++    """
++    rng = np.random.RandomState(51)
++    angles = rng.uniform(-2, 2, (13, 3)).astype(np.float32)
++    angles[0] = [0.2, 0.3, 0.4]
++    angles[1] = [0.0, np.pi / 2, 0.0]
++
++    geo = tigre.geometry(mode="parallel", nVoxel=np.array([24, 32, 40]))
++    geo.dVoxel = np.array([0.8, 1.1, 0.7])
++    geo.sVoxel = geo.nVoxel * geo.dVoxel
++    geo.DSO = np.float32(100)
++    geo.DSD = np.float32(200)
++    geo.nDetector = np.array([45, 55])
++    geo.dDetector = np.array([0.7, 0.9])
++    geo.sDetector = geo.nDetector * geo.dDetector
++    geo.offOrigin = np.array([0.7, -1.3, 2.1])
++    geo.offDetector = np.array([0.0, 0.0])
++    geo.rotDetector = np.array([0.0, 0.0, 0.0])
++
++    start = [4, 6, 10]
++    end = [18, 26, 30]
++    img = np.zeros(geo.nVoxel, dtype=np.float32)
++    img[4:18, 6:26, 10:30] = 1.0
++
++    observed = tigre.Ax(img, geo, angles)
++    expected = _analytical_reference(geo, angles, start, end)
++
++    error = np.abs(observed - expected)
++    max_error = float(error.max())
++    corr = float(np.corrcoef(observed.ravel(), expected.ravel())[0, 1])
++
++    assert max_error < 0.02, f"Max error against analytical ground truth: {max_error}"
++    assert corr > 0.99999, f"Correlation with analytical ground truth: {corr}"
++
++
++def test_parallel_siddon_backward_compatibility():
++    """Verify exact equivalence between 1D angles and 3D (alpha, 0, 0) angles."""
++    geo = tigre.geometry(mode="parallel", nVoxel=np.array([32, 32, 32]))
++    img = np.random.RandomState(42).randn(*geo.nVoxel).astype(np.float32)
++
++    angles_1d = np.linspace(0, 2 * np.pi, 8, endpoint=False, dtype=np.float32)
++    angles_3d = np.zeros((8, 3), dtype=np.float32)
++    angles_3d[:, 0] = angles_1d
++
++    p_1d = tigre.Ax(img, geo, angles_1d, projection_type="Siddon")
++    p_3d = tigre.Ax(img, geo, angles_3d, projection_type="Siddon")
++    assert np.allclose(p_1d, p_3d, atol=1e-6), f"Max diff between 1D and 3D: {np.max(np.abs(p_1d - p_3d))}"
++
++
++def test_parallel_siddon_baseline_untilted_exact_match():
++    """Verify regression consistency with upstream baseline (SHA 6b0951a8) on untilted projections.
++
++    Evaluates 11 arbitrary alpha views on a random 32^3 volume with theta=0 and psi=0.
++    Under identical floating-point operations, comprehensive offline diagnostic confirms
++    exact bitwise agreement across all 11,264 detector pixels (max absolute error = 0.0).
++    This test verifies that key pixels and per-view integrated sums match the recorded
++    upstream baseline outputs with strict absolute tolerance (atol=1e-5, rtol=0).
++    """
++    geo = tigre.geometry(mode="parallel", nVoxel=np.array([32, 32, 32]))
++    img = np.random.RandomState(42).randn(32, 32, 32).astype(np.float32)
++    angles = np.array(
++        [0, 0.13, 0.3, 0.7, np.pi / 4, np.pi / 2, 1.8, 2.7, 3.5, 4.1, 5.9],
++        dtype=np.float32,
++    )
++    observed = tigre.Ax(img, geo, angles, projection_type="Siddon")
++
++    # Baseline reference values at key pixels (computed from upstream HEAD master 6b0951a8)
++    assert np.isclose(observed[0, 16, 16], 7.398002, atol=1e-5, rtol=0)
++    assert np.isclose(observed[5, 16, 16], 9.700473, atol=1e-5, rtol=0)
++    assert np.isclose(observed[9, 24, 28], -5.863827, atol=1e-5, rtol=0)
++    assert np.isclose(observed[9, 15, 11], -3.0249376, atol=1e-5, rtol=0)
++
++    # Per-view integrated sums across all 11 views
++    expected_sums = [
++        -38.325397, 4.210716, -28.240627, 23.200993, 0.682480,
++        -38.325356, 26.971115, 47.643982, -13.041023, -28.732788, 25.800674
++    ]
++    observed_sums = [float(observed[v].sum()) for v in range(11)]
++    assert np.allclose(observed_sums, expected_sums, atol=1e-4, rtol=0)
++
++
++if __name__ == "__main__":
++    test_parallel_siddon_z_boundary_sampling()
++    test_parallel_siddon_grazing_and_cardinal_initial_voxels()
++    test_parallel_siddon_small_angle_sensitivity()
++    test_parallel_siddon_euler_sensitivity_nondegenerate()
++    test_parallel_siddon_independent_analytical_ground_truth()
++    test_parallel_siddon_backward_compatibility()
++    test_parallel_siddon_baseline_untilted_exact_match()
++    print("All parallel Siddon Euler angle tests passed successfully!")
