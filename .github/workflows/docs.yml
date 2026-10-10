@@ -1,15 +1,12 @@
 name: Docs
 
-# Auto-deploy is disabled while the repository is private.
-# GitHub Pages requires a public repo (or Enterprise plan).
-# Uncomment the triggers below when the repository is made public.
 on:
+  push:
+    branches:
+      - master
+    tags: '*'
+  pull_request:
   workflow_dispatch:
-#  push:
-#    branches:
-#      - master
-#    tags: '*'
-#  pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
