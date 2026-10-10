@@ -307,6 +307,13 @@ The following Julia packages and organizations may be useful for users
 interested in tomography, image reconstruction, phantoms, sinograms, and
 computational imaging. This list is not exhaustive.
 
+### Related packages from this porting effort
+
+- [AstraToolbox.jl](https://github.com/hashimoto-koh/AstraToolbox.jl) — unofficial Julia port of [ASTRA Toolbox](https://github.com/astra-toolbox/astra-toolbox).
+- [TomoPhantom.jl](https://github.com/hashimoto-koh/TomoPhantom.jl) — unofficial Julia port of [TomoPhantom](https://github.com/dkazanc/tomophantom).
+
+### Other related packages
+
 - [JuliaImageRecon](https://github.com/JuliaImageRecon) — Julia packages for image reconstruction and related tools.
 - [Sinograms.jl](https://github.com/JuliaImageRecon/Sinograms.jl) — tools for sinograms, tomography, Radon transforms, and CT/CBCT geometry.
 - [ImagePhantoms.jl](https://github.com/JuliaImageRecon/ImagePhantoms.jl) — software phantoms and analytical Radon/X-ray transforms.
@@ -338,7 +345,6 @@ For the original project, documentation, and upstream implementation, see:
 ---
 
 ## License & Third-Party Notices
- 
+
 This package and wrapper are distributed under the BSD 3-Clause License. See [`LICENSE.md`](LICENSE.md) for details.
 Upstream copyright, license terms, and third-party notices are documented in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
-
