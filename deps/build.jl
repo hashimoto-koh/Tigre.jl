@@ -134,10 +134,17 @@ function source_checkout_matches(source::AbstractString, ref::AbstractString)
     return isdir(COMMON_DIR)
 end
 
+function reset_upstream_source!(git::AbstractString, ref::AbstractString)
+    run_logged(`$git checkout -f $ref`; dir = SOURCE_ROOT)
+    run_logged(`$git clean -fd`; dir = SOURCE_ROOT)
+    return SOURCE_ROOT
+end
+
 function acquire_tigre_source!(git::AbstractString, source::AbstractString, ref::AbstractString)
     force_fetch = _env_flag("TIGRE_BUILD_FETCH_FORCE")
     if !force_fetch && source_checkout_matches(source, ref)
         println("Upstream TIGRE source already present at requested ref: ", ref)
+        reset_upstream_source!(git, ref)
         return SOURCE_ROOT
     end
 
