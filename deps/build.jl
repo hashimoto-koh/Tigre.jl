@@ -18,7 +18,7 @@ const OUT_DIR = joinpath(ROOT_DIR, "deps", "usr", "lib")
 const OUT_LIB = joinpath(OUT_DIR, "libtigre_julia.$(Libdl.dlext)")
 const BUILD_INFO = joinpath(ROOT_DIR, "deps", "usr", "build-info.toml")
 const DEFAULT_TIGRE_SOURCE = "https://github.com/CERN/TIGRE.git"
-const DEFAULT_TIGRE_REF = "6b0951a8a88aa88a7db5b2a95181a33a95aa8b28"
+const DEFAULT_TIGRE_REF = "24a6fccb705ce001a18ef12f31b1802a06ece036"
 const UPSTREAM_SOURCE_NAMES = [
     "projection.cpp",
     "TIGRE_common.cpp",
@@ -45,8 +45,7 @@ const OVERLAY_SOURCE_NAMES = [
     "TIGRE_common.cpp",
 ]
 const PATCH_NAMES = [
-    "0001-siddon-return-on-missed-ray.patch",
-    "0002-parallel-siddon-projection.patch",
+    "0001-piccs-free-dimgtv-no-reset.patch",
 ]
 
 function _env_flag(name::AbstractString)
@@ -215,21 +214,8 @@ function apply_upstream_patches!(git::AbstractString = find_git())
     for patch in patch_files()
         isfile(patch) || error("patch file not found: $(patch)")
     end
-    _replace_once_preserving_eol!(
-        joinpath(COMMON_DIR, "Siddon_projection.cu"),
-        "    if (am>=aM)\n        detector[idx]=0;\n",
-        "    if (am>=aM) {\n        detector[idx]=0;\n        return;\n    }\n",
-        "Siddon_projection.cu missed-ray return",
-    )
-    _replace_once_preserving_eol!(
-        joinpath(COMMON_DIR, "Siddon_projection_parallel.cu"),
-        "    if (am>=aM)\n        detector[idx]=0.0f;\n",
-        "    if (am>=aM) {\n        detector[idx]=0.0f;\n        return;\n    }\n",
-        "Siddon_projection_parallel.cu missed-ray return",
-    )
-    patch_0002 = joinpath(PATCH_DIR, "0002-parallel-siddon-projection.patch")
-    if isfile(patch_0002)
-        _apply_git_patch_if_needed!(git, patch_0002, SOURCE_ROOT, "0002-parallel-siddon-projection")
+    for patch in patch_files()
+        _apply_git_patch_if_needed!(git, patch, SOURCE_ROOT, basename(patch))
     end
     return nothing
 end

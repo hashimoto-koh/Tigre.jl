@@ -14,6 +14,7 @@ __pycache__/
 
 # Local development files
 /AGENTS.md
+/PROMPT.md
 /private/
 /.codex/
 /.vscode/

@@ -34,8 +34,7 @@ const OVERLAY_SOURCE_NAMES = [
     "TIGRE_common.cpp",
 ]
 const PATCH_NAMES = [
-    "0001-siddon-return-on-missed-ray.patch",
-    "0002-parallel-siddon-projection.patch",
+    "0001-piccs-free-dimgtv-no-reset.patch",
 ]
 const _NATIVE_HANDLE = Ref{Ptr{Cvoid}}(C_NULL)
 
