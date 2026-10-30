@@ -33,9 +33,7 @@ const OVERLAY_SOURCE_NAMES = [
     "TIGRE_common.hpp",
     "TIGRE_common.cpp",
 ]
-const PATCH_NAMES = [
-    "0001-piccs-free-dimgtv-no-reset.patch",
-]
+const PATCH_NAMES = String[]
 const _NATIVE_HANDLE = Ref{Ptr{Cvoid}}(C_NULL)
 
 struct CGeometry

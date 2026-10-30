@@ -18,7 +18,7 @@ const OUT_DIR = joinpath(ROOT_DIR, "deps", "usr", "lib")
 const OUT_LIB = joinpath(OUT_DIR, "libtigre_julia.$(Libdl.dlext)")
 const BUILD_INFO = joinpath(ROOT_DIR, "deps", "usr", "build-info.toml")
 const DEFAULT_TIGRE_SOURCE = "https://github.com/CERN/TIGRE.git"
-const DEFAULT_TIGRE_REF = "24a6fccb705ce001a18ef12f31b1802a06ece036"
+const DEFAULT_TIGRE_REF = "81b6be2cc12ee630d36cba941e111ba14ba34c7c"
 const UPSTREAM_SOURCE_NAMES = [
     "projection.cpp",
     "TIGRE_common.cpp",
@@ -44,9 +44,7 @@ const OVERLAY_SOURCE_NAMES = [
     "TIGRE_common.hpp",
     "TIGRE_common.cpp",
 ]
-const PATCH_NAMES = [
-    "0001-piccs-free-dimgtv-no-reset.patch",
-]
+const PATCH_NAMES = String[]
 
 function _env_flag(name::AbstractString)
     value = lowercase(strip(get(ENV, name, "")))
