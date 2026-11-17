@@ -104,7 +104,7 @@ julia --startup-file=no --project=. -e 'import Pkg; Pkg.develop(path=pwd()); Pkg
 ### Build Mechanics
 
 Running `Pkg.build("Tigre")` automatically:
-1. Reads `deps/upstream.toml` for the upstream repository URL and pinned Git commit (`6b0951a8a88aa88a7db5b2a95181a33a95aa8b28`).
+1. Reads `deps/upstream.toml` for the upstream repository URL and pinned Git commit (`a7d84b510bfc280ec9df7dc0954f294f389957b9`, TIGRE `v3.2.0`).
 2. Clones/fetches upstream `CERN/TIGRE` into `deps/src/TIGRE` (if not already cached).
 3. Applies Julia wrapper shims and minimal overlays from `deps/wrapper/`.
 4. Compiles `deps/usr/lib/libtigre_julia.$(Libdl.dlext)` with `nvcc`.

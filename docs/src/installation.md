@@ -35,8 +35,8 @@ Pkg.develop(path = "/path/to/Tigre.jl")
 ## Building the Native CUDA Backend
 
 During installation (or via `Pkg.build("Tigre")`), the build script `deps/build.jl` automatically:
-1. Clones the upstream CERN/TIGRE repository at a pinned, verified revision.
-2. Applies patches (e.g. Siddon non-intersecting ray fast return, C++ exception wrappers).
+1. Clones the upstream CERN/TIGRE repository at a pinned, verified revision (`v3.2.0`, commit `a7d84b510bfc280ec9df7dc0954f294f389957b9`).
+2. Applies Julia wrapper shims and minimal overlays from `deps/wrapper/` (along with any patches in `deps/patches/`, currently none required).
 3. Compiles the C++/CUDA core into `deps/usr/lib/libtigre_julia.so`.
 4. Writes compilation metadata and timestamps to `deps/usr/build-info.toml`.
 

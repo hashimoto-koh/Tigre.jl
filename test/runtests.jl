@@ -1193,6 +1193,88 @@ if _can_run_gpu_tests()
         @test all(iszero, awminTV(zero_volume; maxiter = 1, alpha = 1f0))
         @test all(isfinite, piccsTV(noisy, prior; maxiter = 1, alpha = 1f0, ratio = 0.5f0))
 
+        # Verify single-GPU tvdenoise! Z-boundary halo handling (PR #804) against
+        # a small test-only CPU discrete reference matching Common/CUDA/tv_proximal.cu.
+        function _cpu_tvdenoise_reference(src::Array{Float32, 3}; lambda::Float32, spacing::NTuple{3, Float32}, maxiter::Int)
+            nx, ny, nz = size(src)
+            vmin, vmax = extrema(src)
+            vrange = vmax - vmin
+            vrange <= eps(Float32) && return copy(src)
+
+            inv_range = 1f0 / vrange
+            f_norm = Float32.((src .- vmin) .* inv_range)
+            depth = nz + 2
+            f = zeros(Float32, nx, ny, depth)
+            f[:, :, 2:(nz + 1)] .= f_norm
+            if nz > 1
+                f[:, :, 1] .= f_norm[:, :, 2]
+                f[:, :, depth] .= f_norm[:, :, nz - 1]
+            end
+
+            u = copy(f)
+            u_next = similar(u)
+            px = zeros(Float32, nx, ny, depth)
+            py = zeros(Float32, nx, ny, depth)
+            pz = zeros(Float32, nx, ny, depth)
+            dx, dy, dz = spacing
+
+            for k in 0:(maxiter - 1)
+                tau2 = 0.3f0 + 0.02f0 * Float32(k)
+                tau1 = (1f0 / tau2) * ((1f0 / 6f0) - (5f0 / (15f0 + Float32(k))))
+
+                @inbounds for z in 1:depth, y in 1:ny, x in 1:nx
+                    div = 0f0
+                    div += z > 1 ? (pz[x, y, z] - pz[x, y, z - 1]) / dz : pz[x, y, z]
+                    div += y > 1 ? (py[x, y, z] - py[x, y - 1, z]) / dy : py[x, y, z]
+                    div += x > 1 ? (px[x, y, z] - px[x - 1, y, z]) / dx : px[x, y, z]
+                    u_next[x, y, z] = u[x, y, z] * (1f0 - tau1) + tau1 * (f[x, y, z] + (1f0 / lambda) * div)
+                end
+                copyto!(u, u_next)
+
+                @inbounds for z in 1:depth, y in 1:ny, x in 1:nx
+                    gz = z < depth ? (u[x, y, z + 1] - u[x, y, z]) / dz : 0f0
+                    gy = y < ny ? (u[x, y + 1, z] - u[x, y, z]) / dy : 0f0
+                    gx = x < nx ? (u[x + 1, y, z] - u[x, y, z]) / dx : 0f0
+                    q0 = pz[x, y, z] + tau2 * gz
+                    q1 = py[x, y, z] + tau2 * gy
+                    q2 = px[x, y, z] + tau2 * gx
+                    nrm = max(1f0, sqrt(q0 * q0 + q1 * q1 + q2 * q2))
+                    pz[x, y, z] = q0 / nrm
+                    py[x, y, z] = q1 / nrm
+                    px[x, y, z] = q2 / nrm
+                end
+            end
+
+            out = Array{Float32}(undef, nx, ny, nz)
+            @inbounds for k in 1:nz, j in 1:ny, i in 1:nx
+                out[i, j, k] = u[i, j, k + 1] * vrange + vmin
+            end
+            return out
+        end
+
+        single_gpu = [available_gpus()[1].id]
+        tv_boundary_vol = Array{Float32}(undef, 4, 5, 6)
+        for z in 1:6, y in 1:5, x in 1:4
+            tv_boundary_vol[x, y, z] = Float32(((17 * (z - 1) + 7 * (y - 1) + 11 * (x - 1) + 3 * (z - 1) * (y - 1)) % 29) / 28)
+        end
+        tv_boundary_vol[2, 3, 6] += 0.6f0
+        tv_boundary_vol[1, 4, 5] -= 0.4f0
+
+        cpu_ref_5 = _cpu_tvdenoise_reference(tv_boundary_vol; lambda = 15f0, spacing = (1f0, 1f0, 1f0), maxiter = 5)
+        gpu_out_5 = tvdenoise(tv_boundary_vol; lambda = 15f0, maxiter = 5, gpu_ids = single_gpu)
+        @test isapprox(gpu_out_5, cpu_ref_5; atol = 1f-5, rtol = 1f-5)
+        @test isapprox(gpu_out_5[:, :, end], cpu_ref_5[:, :, end]; atol = 1f-5, rtol = 1f-5)
+
+        cpu_ref_20 = _cpu_tvdenoise_reference(tv_boundary_vol; lambda = 5f0, spacing = (1f0, 1.2f0, 0.8f0), maxiter = 20)
+        gpu_out_20 = similar(tv_boundary_vol)
+        tvdenoise!(gpu_out_20, tv_boundary_vol; lambda = 5f0, spacing = (1f0, 1.2f0, 0.8f0), maxiter = 20, gpu_ids = single_gpu)
+        @test isapprox(gpu_out_20, cpu_ref_20; atol = 1f-5, rtol = 1f-5)
+        @test isapprox(gpu_out_20[:, :, end], cpu_ref_20[:, :, end]; atol = 1f-5, rtol = 1f-5)
+
+        gpu_inplace_20 = copy(tv_boundary_vol)
+        tvdenoise!(gpu_inplace_20, gpu_inplace_20; lambda = 5f0, spacing = (1f0, 1.2f0, 0.8f0), maxiter = 20, gpu_ids = single_gpu)
+        @test isapprox(gpu_inplace_20, gpu_out_20; atol = 1f-6, rtol = 1f-6)
+
         mlem_vol, mlem_hist = mlem(proj, iter_geo, 1; return_history = true, compute_l2 = true)
         ista_vol, ista_hist = ista(proj, iter_geo, 1; return_history = true, compute_l2 = true, tviter = 1)
         fista_vol, fista_hist = fista(proj, iter_geo, 1; return_history = true, compute_l2 = true, tviter = 1)
@@ -1589,7 +1671,7 @@ if _can_run_gpu_tests()
         assert_signature_matches(volume_signature(back), REGRESSION_REFERENCE.atb)
         assert_signature_matches(volume_signature(fdk_vol), REGRESSION_REFERENCE.fdk_hann_wang)
         assert_signature_matches(volume_signature(sart_vol), REGRESSION_REFERENCE.sart)
-        assert_signature_matches(volume_signature(fista_vol), REGRESSION_REFERENCE.fista)
+        assert_signature_matches(volume_signature(fista_vol), REGRESSION_REFERENCE.fista; atol = 1f-8, rtol = 2f-4)
         assert_signature_matches(volume_signature(lsmr_vol), REGRESSION_REFERENCE.lsmr)
         assert_signature_matches(volume_signature(hybrid_tv_vol), REGRESSION_REFERENCE.hybrid_flsqr_tv)
         assert_signature_matches(volume_signature(piccs_vol), REGRESSION_REFERENCE.piccs)

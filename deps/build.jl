@@ -18,7 +18,7 @@ const OUT_DIR = joinpath(ROOT_DIR, "deps", "usr", "lib")
 const OUT_LIB = joinpath(OUT_DIR, "libtigre_julia.$(Libdl.dlext)")
 const BUILD_INFO = joinpath(ROOT_DIR, "deps", "usr", "build-info.toml")
 const DEFAULT_TIGRE_SOURCE = "https://github.com/CERN/TIGRE.git"
-const DEFAULT_TIGRE_REF = "81b6be2cc12ee630d36cba941e111ba14ba34c7c"
+const DEFAULT_TIGRE_REF = "a7d84b510bfc280ec9df7dc0954f294f389957b9"
 const UPSTREAM_SOURCE_NAMES = [
     "projection.cpp",
     "TIGRE_common.cpp",
