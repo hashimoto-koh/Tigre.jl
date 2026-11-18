@@ -110,10 +110,80 @@ end
         # Normalize build-info.toml output path and native_library_path() with realpath
         # to handle potential symlink differences.
         @test realpath(info["output"]) == realpath(native_library_path())
+        @test get(info, "build_scheme", "") == Tigre.NATIVE_BUILD_SCHEME
         @test !status.stale
         @test isempty(status.stale_reasons)
+
+        legacy_info = copy(info)
+        delete!(legacy_info, "build_scheme")
+        @test "recorded build scheme differs" in Tigre._native_build_stale_reasons_for(legacy_info)
     else
         @test !isfile(native_build_info_path())
+    end
+end
+
+function _can_run_verify_only_build_test()
+    native_library_available() || return false
+    isdir(Tigre.COMMON_DIR) || return false
+    try
+        has_nvcc = Sys.which("nvcc") !== nothing ||
+                   isfile(get(ENV, "CUDA_NVCC", "")) ||
+                   any(r -> !isempty(r) && isfile(joinpath(r, "bin", "nvcc")),
+                       (get(ENV, "CUDA_HOME", ""), get(ENV, "CUDA_PATH", ""), "/usr/local/cuda", "/opt/cuda"))
+        has_objcopy = Sys.which("objcopy") !== nothing || isfile(get(ENV, "TIGRE_OBJCOPY", ""))
+        has_nm = Sys.which("nm") !== nothing || isfile(get(ENV, "TIGRE_NM", ""))
+        return has_nvcc && has_objcopy && has_nm
+    catch
+        return false
+    end
+end
+
+@testset "Native symbol isolation" begin
+    if native_library_available()
+        handle = Libdl.dlopen(native_library_path())
+        try
+            # These internal colliding symbols must be localized (not dynamically exported).
+            localized_colliding_symbols = [
+                "_Z10gradientTVPKfPflll",
+                "_Z36__device_stub__Z10gradientTVPKfPflllPKfPflll",
+                "_Z10warpReducePVfm",
+                "_Z11reduceNorm2PfS_m",
+                "_Z34__device_stub__Z11reduceNorm2PfS_mPfS_m",
+                "_Z9reduceSumPfS_m",
+                "_Z31__device_stub__Z9reduceSumPfS_mPfS_m",
+                "_Z17divideArrayScalarPffm",
+                "_Z39__device_stub__Z17divideArrayScalarPffmPffm",
+                "_Z19multiplyArrayScalarPffm",
+                "_Z41__device_stub__Z19multiplyArrayScalarPffmPffm",
+                "_Z15substractArraysPfS_m",
+                "_Z38__device_stub__Z15substractArraysPfS_mPfS_m",
+            ]
+            for sym in localized_colliding_symbols
+                @test Libdl.dlsym_e(handle, sym) == C_NULL
+            end
+            for api_sym in ("tigre_julia_piccs_tv", "tigre_julia_min_tv", "tigre_julia_awmin_tv", "tigre_julia_tvdenoise")
+                @test Libdl.dlsym_e(handle, api_sym) != C_NULL
+            end
+        finally
+            Libdl.dlclose(handle)
+        end
+    else
+        @info "Skipping native symbol isolation checks: native library not built"
+    end
+end
+
+@testset "build_native verify-only isolation" begin
+    if _can_run_verify_only_build_test()
+        res = withenv("TIGRE_BUILD_VERIFY_ONLY" => "1") do
+            redirect_stdout(devnull) do
+                @test_nowarn Tigre.build_native()
+            end
+        end
+        @test !res.stale
+        @test isempty(res.reasons)
+        @test !library_status().stale
+    else
+        @info "Skipping build_native verify-only check: missing native library, upstream checkout, or build toolchain"
     end
 end
 
@@ -1192,6 +1262,21 @@ if _can_run_gpu_tests()
         @test all(iszero, minTV(zero_volume; maxiter = 1, alpha = 1f0))
         @test all(iszero, awminTV(zero_volume; maxiter = 1, alpha = 1f0))
         @test all(isfinite, piccsTV(noisy, prior; maxiter = 1, alpha = 1f0, ratio = 0.5f0))
+
+        # Auxiliary check: verify piccsTV dispatches PICCS.cu::gradientTV (eps=1e-6)
+        # rather than shadowed GD_TV.cu::gradientTV (eps=1e-8) using a small-amplitude impulse.
+        small_tv_vol = zeros(Float32, 4, 4, 4)
+        small_tv_vol[2, 2, 2] = 1f-5
+        small_tv_vol[3, 3, 3] = 1f-3
+        small_tv_out = piccsTV(small_tv_vol, zeros(Float32, 4, 4, 4); alpha = 1f0, ratio = 0f0, maxiter = 1, gpu_ids = [available_gpus()[1].id])
+        @test abs(small_tv_out[2, 2, 2] - small_tv_vol[2, 2, 2]) / abs(small_tv_out[3, 3, 3] - small_tv_vol[3, 3, 3]) < 0.95f0
+
+        if get(ENV, "TIGRE_RUN_SANITIZER_TESTS", "") == "1" && Sys.which("compute-sanitizer") !== nothing
+            sanitizer = Sys.which("compute-sanitizer")
+            root_dir = normpath(joinpath(@__DIR__, ".."))
+            code = "using Tigre; v = reshape(Float32[((i % 13) * 0.1f0) for i in 1:512], 8, 8, 8); p = fill(0.25f0, 8, 8, 8); piccsTV(v, p; alpha = 0.02f0, ratio = 0.5f0, maxiter = 5, gpu_ids = [0])"
+            @test success(`$sanitizer --tool memcheck --error-exitcode 1 julia --startup-file=no --project=$root_dir -e $code`)
+        end
 
         # Verify single-GPU tvdenoise! Z-boundary halo handling (PR #804) against
         # a small test-only CPU discrete reference matching Common/CUDA/tv_proximal.cu.

@@ -2,8 +2,10 @@ using Dates
 using Libdl
 using TOML
 
-const ROOT_DIR = normpath(joinpath(@__DIR__, ".."))
-const DEPS_DIR = @__DIR__
+Base.include(@__MODULE__, joinpath(@__DIR__, "native_config.jl"))
+
+const ROOT_DIR = realpath(normpath(joinpath(@__DIR__, "..")))
+const DEPS_DIR = realpath(@__DIR__)
 const SOURCE_DIR = joinpath(DEPS_DIR, "src")
 const SOURCE_ROOT = joinpath(SOURCE_DIR, "TIGRE")
 const COMMON_DIR = joinpath(SOURCE_ROOT, "Common", "CUDA")
@@ -14,37 +16,13 @@ const WRAPPER_INCLUDE_DIR = joinpath(WRAPPER_DIR, "include")
 const WRAPPER_SRC_DIR = joinpath(WRAPPER_DIR, "src")
 const WRAPPER_OVERLAY_DIR = joinpath(WRAPPER_DIR, "overlay")
 const PATCH_DIR = joinpath(DEPS_DIR, "patches")
-const OUT_DIR = joinpath(ROOT_DIR, "deps", "usr", "lib")
+const OBJ_DIR = joinpath(DEPS_DIR, "usr", "obj")
+const OUT_DIR = joinpath(DEPS_DIR, "usr", "lib")
 const OUT_LIB = joinpath(OUT_DIR, "libtigre_julia.$(Libdl.dlext)")
-const BUILD_INFO = joinpath(ROOT_DIR, "deps", "usr", "build-info.toml")
+const BUILD_INFO = joinpath(DEPS_DIR, "usr", "build-info.toml")
+const BUILD_SCHEME = NATIVE_BUILD_SCHEME
 const DEFAULT_TIGRE_SOURCE = "https://github.com/CERN/TIGRE.git"
 const DEFAULT_TIGRE_REF = "a7d84b510bfc280ec9df7dc0954f294f389957b9"
-const UPSTREAM_SOURCE_NAMES = [
-    "projection.cpp",
-    "TIGRE_common.cpp",
-    "GpuIds.cpp",
-    "gpuUtils.cu",
-    "Siddon_projection.cu",
-    "Siddon_projection_parallel.cu",
-    "ray_interpolated_projection.cu",
-    "ray_interpolated_projection_parallel.cu",
-    "voxel_backprojection.cu",
-    "voxel_backprojection2.cu",
-    "voxel_backprojection_parallel.cu",
-    "GD_TV.cu",
-    "GD_AwTV.cu",
-    "tv_proximal.cu",
-    "PICCS.cu",
-]
-const WRAPPER_SOURCE_NAMES = [
-    "tigre_julia_runtime.cpp",
-    "tigre_julia_shim.cpp",
-]
-const OVERLAY_SOURCE_NAMES = [
-    "TIGRE_common.hpp",
-    "TIGRE_common.cpp",
-]
-const PATCH_NAMES = String[]
 
 function _env_flag(name::AbstractString)
     value = lowercase(strip(get(ENV, name, "")))
@@ -137,11 +115,39 @@ function reset_upstream_source!(git::AbstractString, ref::AbstractString)
     return SOURCE_ROOT
 end
 
+function _only_managed_overlay_dirty(git::AbstractString)
+    isempty(PATCH_NAMES) || return false
+    status_cmd = Cmd(`$git status --porcelain`; dir = SOURCE_ROOT)
+    out = IOBuffer()
+    err = IOBuffer()
+    proc = run(pipeline(ignorestatus(status_cmd); stdout = out, stderr = err))
+    proc.exitcode == 0 || return false
+    allowed = Dict("Common/CUDA/$(name)" => name for name in OVERLAY_SOURCE_NAMES)
+    for raw_line in eachline(IOBuffer(String(take!(out))))
+        isempty(strip(raw_line)) && continue
+        length(raw_line) >= 4 || return false
+        code = raw_line[1:2]
+        relpath = strip(raw_line[4:end])
+        # Only allow tracked modifications to managed overlay files whose contents already match.
+        (code == " M" || code == "M " || code == "MM") || return false
+        haskey(allowed, relpath) || return false
+        name = allowed[relpath]
+        src = joinpath(WRAPPER_OVERLAY_DIR, name)
+        dest = joinpath(COMMON_DIR, name)
+        (isfile(src) && isfile(dest) && read(src, String) == read(dest, String)) || return false
+    end
+    return true
+end
+
 function acquire_tigre_source!(git::AbstractString, source::AbstractString, ref::AbstractString)
     force_fetch = _env_flag("TIGRE_BUILD_FETCH_FORCE")
     if !force_fetch && source_checkout_matches(source, ref)
         println("Upstream TIGRE source already present at requested ref: ", ref)
-        reset_upstream_source!(git, ref)
+        if _only_managed_overlay_dirty(git)
+            println("Upstream checkout matches managed overlay files; skipping git reset.")
+        else
+            reset_upstream_source!(git, ref)
+        end
         return SOURCE_ROOT
     end
 
@@ -314,15 +320,65 @@ function ensure_inputs!(sources, include_dir::AbstractString, lib_dir::AbstractS
     return nothing
 end
 
-function build_command(nvcc::AbstractString, include_dir::AbstractString, lib_dir::AbstractString, sources::Vector{String})
+const STRONG_SYMBOL_TYPES = Set(["T", "D", "B", "R", "C", "S", "G"])
+const FORBIDDEN_COLLIDING_EXPORTS = Set([
+    "_Z10gradientTVPKfPflll",
+    "_Z36__device_stub__Z10gradientTVPKfPflllPKfPflll",
+    "_Z10warpReducePVfm",
+    "_Z11reduceNorm2PfS_m",
+    "_Z34__device_stub__Z11reduceNorm2PfS_mPfS_m",
+    "_Z9reduceSumPfS_m",
+    "_Z31__device_stub__Z9reduceSumPfS_mPfS_m",
+    "_Z17divideArrayScalarPffm",
+    "_Z39__device_stub__Z17divideArrayScalarPffmPffm",
+    "_Z19multiplyArrayScalarPffm",
+    "_Z41__device_stub__Z19multiplyArrayScalarPffmPffm",
+    "_Z15substractArraysPfS_m",
+    "_Z38__device_stub__Z15substractArraysPfS_mPfS_m",
+])
+
+function _tool_candidates(env_key::AbstractString, name::AbstractString)
+    candidates = String[]
+    override = _env_path(env_key)
+    override !== nothing && push!(candidates, override)
+    path_tool = Sys.which(name)
+    path_tool !== nothing && push!(candidates, path_tool)
+    return unique(map(normpath, filter(!isempty, candidates)))
+end
+
+function find_objcopy()
+    for candidate in _tool_candidates("TIGRE_OBJCOPY", "objcopy")
+        isfile(candidate) && return candidate
+    end
+    error(
+        "objcopy not found. GNU binutils (objcopy and nm) is required on Linux to isolate CUDA translation-unit symbols. " *
+        "Please install binutils and configure PATH or TIGRE_OBJCOPY."
+    )
+end
+
+function find_nm()
+    for candidate in _tool_candidates("TIGRE_NM", "nm")
+        isfile(candidate) && return candidate
+    end
+    error(
+        "nm not found. GNU binutils (objcopy and nm) is required on Linux to isolate CUDA translation-unit symbols. " *
+        "Please install binutils and configure PATH or TIGRE_NM."
+    )
+end
+
+_is_cuda_localize_source(src::AbstractString) = endswith(src, ".cu") && basename(src) in UPSTREAM_SOURCE_NAMES
+
+_raw_object_path(src::AbstractString) = joinpath(OBJ_DIR, basename(src) * ".raw.o")
+_final_object_path(src::AbstractString) = joinpath(OBJ_DIR, basename(src) * (_is_cuda_localize_source(src) ? ".o" : ".raw.o"))
+
+function compile_command(nvcc::AbstractString, include_dir::AbstractString, src::AbstractString, raw_obj::AbstractString)
     cmd = String[
         nvcc,
-        "--shared",
+        "-c",
         "-O3",
         "--std=c++14",
         "--expt-relaxed-constexpr",
         "-Xcompiler=-fPIC",
-        "-Xlinker=--allow-multiple-definition",
         "-DIS_FOR_JULIA_TIGRE",
         "-I$(COMMON_DIR)",
         "-I$(WRAPPER_INCLUDE_DIR)",
@@ -330,14 +386,118 @@ function build_command(nvcc::AbstractString, include_dir::AbstractString, lib_di
     ]
     append!(cmd, cuda_arch_flags(nvcc))
     append!(cmd, extra_nvcc_flags())
-    append!(cmd, sources)
+    push!(cmd, src, "-o", raw_obj)
+    return cmd
+end
+
+function compile_commands_for(nvcc::AbstractString, include_dir::AbstractString, compile_sources::Vector{String})
+    return [compile_command(nvcc, include_dir, src, _raw_object_path(src)) for src in compile_sources]
+end
+
+function link_command(nvcc::AbstractString, lib_dir::AbstractString, objs::Vector{String})
+    cmd = String[
+        nvcc,
+        "--shared",
+        "-Xlinker=-z,defs",
+    ]
+    append!(cmd, objs)
     append!(cmd, ["-L$(lib_dir)", "-lcudart", "-o", OUT_LIB])
     return cmd
 end
 
-function write_build_info(cmd::Vector{String}, nvcc::AbstractString, cuda::AbstractString, include_dir::AbstractString, lib_dir::AbstractString, sources::Vector{String}, upstream_source::AbstractString, upstream_ref::AbstractString)
+function _nm_defined_strong(nm_bin::AbstractString, obj_path::AbstractString)
+    out = IOBuffer()
+    err = IOBuffer()
+    proc = run(pipeline(ignorestatus(`$nm_bin -g --defined-only -P $obj_path`); stdout = out, stderr = err))
+    proc.exitcode == 0 || error("nm failed on $(obj_path): $(String(take!(err)))")
+    syms = Set{String}()
+    for line in eachline(IOBuffer(String(take!(out))))
+        parts = split(line)
+        length(parts) >= 2 || continue
+        parts[2] in STRONG_SYMBOL_TYPES && push!(syms, parts[1])
+    end
+    return syms
+end
+
+function _nm_undefined(nm_bin::AbstractString, obj_path::AbstractString)
+    out = IOBuffer()
+    err = IOBuffer()
+    proc = run(pipeline(ignorestatus(`$nm_bin -u -P $obj_path`); stdout = out, stderr = err))
+    proc.exitcode == 0 || error("nm -u failed on $(obj_path): $(String(take!(err)))")
+    syms = Set{String}()
+    for line in eachline(IOBuffer(String(take!(out))))
+        parts = split(line)
+        isempty(parts) && continue
+        push!(syms, parts[1])
+    end
+    return syms
+end
+
+function localize_cuda_objects!(nm_bin::AbstractString, objcopy_bin::AbstractString, compile_sources::Vector{String}, raw_objs::Vector{String}, final_objs::Vector{String})
+    n = length(compile_sources)
+    undefs = [_nm_undefined(nm_bin, raw_objs[i]) for i in 1:n]
+    seen_exports = Set{String}()
+    derived_cuda_exports = Set{String}()
+
+    for i in 1:n
+        src = compile_sources[i]
+        raw_obj = raw_objs[i]
+        dst_obj = final_objs[i]
+        if !_is_cuda_localize_source(src)
+            continue
+        end
+        def_strong = _nm_defined_strong(nm_bin, raw_obj)
+        needed_by_others = Set{String}()
+        for j in 1:n
+            j == i && continue
+            union!(needed_by_others, undefs[j])
+        end
+        intersect!(needed_by_others, def_strong)
+        exp_i = setdiff(needed_by_others, seen_exports)
+        union!(seen_exports, exp_i)
+        union!(derived_cuda_exports, exp_i)
+
+        to_localize = sort!(collect(setdiff(def_strong, exp_i)))
+        sym_file = joinpath(OBJ_DIR, basename(src) * ".localize.syms")
+        write(sym_file, join(to_localize, "\n") * (isempty(to_localize) ? "" : "\n"))
+        if isempty(to_localize)
+            cp(raw_obj, dst_obj; force = true)
+        else
+            run(`$objcopy_bin --localize-symbols=$sym_file $raw_obj $dst_obj`)
+        end
+    end
+
+    forbidden = intersect(derived_cuda_exports, FORBIDDEN_COLLIDING_EXPORTS)
+    isempty(forbidden) || error(
+        "Forbidden colliding CUDA internal symbols were referenced across translation units: " *
+        join(sort!(collect(forbidden)), ", ")
+    )
+    return nothing
+end
+
+function verify_linked_library!(nm_bin::AbstractString, lib_path::AbstractString)
+    out = IOBuffer()
+    err = IOBuffer()
+    proc = run(pipeline(ignorestatus(`$nm_bin -D --defined-only -P $lib_path`); stdout = out, stderr = err))
+    proc.exitcode == 0 || error("nm -D failed on $(lib_path): $(String(take!(err)))")
+    for line in eachline(IOBuffer(String(take!(out))))
+        parts = split(line)
+        length(parts) >= 2 || continue
+        sym, typ = parts[1], parts[2]
+        if sym in FORBIDDEN_COLLIDING_EXPORTS
+            error("Post-link check failed: forbidden colliding symbol dynamically exported: $(sym)")
+        end
+        if typ == "T" && occursin("__device_stub__", sym)
+            error("Post-link check failed: CUDA kernel stub dynamically exported as strong T symbol: $(sym)")
+        end
+    end
+    return nothing
+end
+
+function write_build_info(compile_cmds::Vector{Vector{String}}, link_cmd::Vector{String}, nvcc::AbstractString, cuda::AbstractString, include_dir::AbstractString, lib_dir::AbstractString, sources::Vector{String}, upstream_source::AbstractString, upstream_ref::AbstractString)
     info = Dict(
         "output" => OUT_LIB,
+        "build_scheme" => BUILD_SCHEME,
         "timestamp_utc" => Dates.format(now(Dates.UTC), dateformat"yyyy-mm-ddTHH:MM:SSZ"),
         "julia_version" => string(VERSION),
         "platform" => string(Sys.MACHINE),
@@ -348,7 +508,8 @@ function write_build_info(cmd::Vector{String}, nvcc::AbstractString, cuda::Abstr
         "cuda_home" => cuda,
         "cuda_include_dir" => include_dir,
         "cuda_lib_dir" => lib_dir,
-        "command" => cmd,
+        "compile_commands" => compile_cmds,
+        "link_command" => link_cmd,
         "arch_flags" => cuda_arch_flags(nvcc),
         "extra_nvcc_flags" => extra_nvcc_flags(),
         "sources" => sources,
@@ -362,6 +523,8 @@ function write_build_info(cmd::Vector{String}, nvcc::AbstractString, cuda::Abstr
             "CUDA_LIB_DIR" => get(ENV, "CUDA_LIB_DIR", ""),
             "TIGRE_CUDA_ARCH_FLAGS" => get(ENV, "TIGRE_CUDA_ARCH_FLAGS", ""),
             "TIGRE_EXTRA_NVCC_FLAGS" => get(ENV, "TIGRE_EXTRA_NVCC_FLAGS", ""),
+            "TIGRE_OBJCOPY" => get(ENV, "TIGRE_OBJCOPY", ""),
+            "TIGRE_NM" => get(ENV, "TIGRE_NM", ""),
         ),
     )
     mkpath(dirname(BUILD_INFO))
@@ -371,7 +534,7 @@ function write_build_info(cmd::Vector{String}, nvcc::AbstractString, cuda::Abstr
     return BUILD_INFO
 end
 
-function stale_reasons(cmd::Vector{String}, sources::Vector{String}, upstream_source::AbstractString, upstream_ref::AbstractString)
+function stale_reasons(compile_cmds::Vector{Vector{String}}, link_cmd::Vector{String}, sources::Vector{String}, upstream_source::AbstractString, upstream_ref::AbstractString)
     reasons = String[]
     isfile(OUT_LIB) || push!(reasons, "output library is missing")
     info = read_build_info()
@@ -384,9 +547,11 @@ function stale_reasons(cmd::Vector{String}, sources::Vector{String}, upstream_so
         recorded_real = isfile(recorded_output) ? realpath(recorded_output) : normpath(recorded_output)
         current_real = isfile(current_output) ? realpath(current_output) : normpath(current_output)
         recorded_real == current_real || push!(reasons, "recorded output path differs")
+        get(info, "build_scheme", "") == BUILD_SCHEME || push!(reasons, "recorded build scheme differs")
         get(info, "upstream_source", "") == upstream_source || push!(reasons, "recorded upstream source differs")
         get(info, "upstream_ref", "") == upstream_ref || push!(reasons, "recorded upstream ref differs")
-        get(info, "command", String[]) == cmd || push!(reasons, "recorded build command differs")
+        get(info, "compile_commands", Any[]) == compile_cmds || push!(reasons, "recorded compile commands differ")
+        get(info, "link_command", String[]) == link_cmd || push!(reasons, "recorded link command differs")
         # Compare source list by basename sets to handle symlink differences.
         recorded_sources = get(info, "sources", String[])
         current_basenames = Set(basename(p) for p in sources)
@@ -404,8 +569,9 @@ function stale_reasons(cmd::Vector{String}, sources::Vector{String}, upstream_so
     return unique(reasons)
 end
 
-function print_build_plan(cmd::Vector{String}, nvcc::AbstractString, cuda::AbstractString, include_dir::AbstractString, lib_dir::AbstractString, upstream_source::AbstractString, upstream_ref::AbstractString)
+function print_build_plan(compile_cmds::Vector{Vector{String}}, link_cmd::Vector{String}, nvcc::AbstractString, cuda::AbstractString, include_dir::AbstractString, lib_dir::AbstractString, upstream_source::AbstractString, upstream_ref::AbstractString)
     println("Build target: ", OUT_LIB)
+    println("  build_scheme: ", BUILD_SCHEME)
     println("  upstream_source: ", upstream_source)
     println("  upstream_ref: ", upstream_ref)
     println("  source_root: ", SOURCE_ROOT)
@@ -415,17 +581,33 @@ function print_build_plan(cmd::Vector{String}, nvcc::AbstractString, cuda::Abstr
     println("  lib_dir: ", lib_dir)
     println("  arch_flags: ", isempty(cuda_arch_flags(nvcc)) ? "(nvcc default)" : join(cuda_arch_flags(nvcc), " "))
     !isempty(extra_nvcc_flags()) && println("  extra_nvcc_flags: ", join(extra_nvcc_flags(), " "))
-    println("  command: ", join(cmd, " "))
+    println("  compile_steps: ", length(compile_cmds), " translation units -> ", OBJ_DIR)
+    println("  localization: <per-tu nm/objcopy localization for CUDA objects>")
+    println("  link_command: ", join(link_cmd, " "))
 end
 
 function build()
     upstream = _read_upstream_config()
-    git = find_git()
-    acquire_tigre_source!(git, upstream.source, upstream.ref)
-    ensure_overlay_files!()
-    apply_upstream_patches!()
+    force = _env_flag("TIGRE_BUILD_FORCE")
+    dry_run = _env_flag("TIGRE_BUILD_DRY_RUN")
+    verify_only = _env_flag("TIGRE_BUILD_VERIFY_ONLY")
+    readonly_mode = verify_only || dry_run
+
+    if readonly_mode
+        source_checkout_matches(upstream.source, upstream.ref) || error(
+            "Upstream TIGRE source is missing or does not match configured ref ($(upstream.ref)). " *
+            "Please run build without TIGRE_BUILD_VERIFY_ONLY/TIGRE_BUILD_DRY_RUN first."
+        )
+    else
+        git = find_git()
+        acquire_tigre_source!(git, upstream.source, upstream.ref)
+        ensure_overlay_files!()
+        apply_upstream_patches!(git)
+    end
 
     nvcc = find_nvcc()
+    objcopy_bin = find_objcopy()
+    nm_bin = find_nm()
     cuda = cuda_home(nvcc)
     include_dir = cuda_include_dir(cuda)
     lib_dir = cuda_lib_dir(cuda)
@@ -433,14 +615,13 @@ function build()
     sources = tracked_sources()
     ensure_inputs!(compile_sources, include_dir, lib_dir)
 
-    mkpath(OUT_DIR)
-    cmd = build_command(nvcc, include_dir, lib_dir, compile_sources)
-    reasons = stale_reasons(cmd, sources, upstream.source, upstream.ref)
-    force = _env_flag("TIGRE_BUILD_FORCE")
-    dry_run = _env_flag("TIGRE_BUILD_DRY_RUN")
-    verify_only = _env_flag("TIGRE_BUILD_VERIFY_ONLY")
+    raw_objs = [_raw_object_path(src) for src in compile_sources]
+    final_objs = [_final_object_path(src) for src in compile_sources]
+    compile_cmds = compile_commands_for(nvcc, include_dir, compile_sources)
+    link_cmd = link_command(nvcc, lib_dir, final_objs)
+    reasons = stale_reasons(compile_cmds, link_cmd, sources, upstream.source, upstream.ref)
 
-    print_build_plan(cmd, nvcc, cuda, include_dir, lib_dir, upstream.source, upstream.ref)
+    print_build_plan(compile_cmds, link_cmd, nvcc, cuda, include_dir, lib_dir, upstream.source, upstream.ref)
     if isempty(reasons)
         println("  status: up-to-date")
     else
@@ -452,27 +633,46 @@ function build()
 
     if verify_only
         println("Verify-only mode: skipping compilation.")
-        return (; output = OUT_LIB, stale = !isempty(reasons), reasons, command = cmd)
+        return (; output = OUT_LIB, stale = !isempty(reasons), reasons, build_scheme = BUILD_SCHEME, compile_commands = compile_cmds, link_command = link_cmd)
     end
     if dry_run
         println("Dry-run mode: skipping compilation.")
-        return (; output = OUT_LIB, stale = !isempty(reasons), reasons, command = cmd)
+        return (; output = OUT_LIB, stale = !isempty(reasons), reasons, build_scheme = BUILD_SCHEME, compile_commands = compile_cmds, link_command = link_cmd)
     end
     if !force && isempty(reasons)
         println("Output is up-to-date; skipping compile.")
         return OUT_LIB
     end
 
+    mkpath(OUT_DIR)
+    rm(OBJ_DIR; recursive = true, force = true)
+    mkpath(OBJ_DIR)
+
+    for (src, cmd) in zip(compile_sources, compile_cmds)
+        try
+            run(Cmd(cmd))
+        catch err
+            println(stderr, "native compile command failed for ", basename(src), ":")
+            println(stderr, "  ", join(cmd, " "))
+            println(stderr, "  If needed, please set CUDA_NVCC / CUDA_HOME / CUDA_INCLUDE_DIR / TIGRE_CUDA_ARCH_FLAGS.")
+            rethrow(err)
+        end
+    end
+
+    localize_cuda_objects!(nm_bin, objcopy_bin, compile_sources, raw_objs, final_objs)
+
     try
-        run(Cmd(cmd))
+        run(Cmd(link_cmd))
     catch err
-        println(stderr, "native build command failed:")
-        println(stderr, "  ", join(cmd, " "))
+        println(stderr, "native link command failed:")
+        println(stderr, "  ", join(link_cmd, " "))
         println(stderr, "  If needed, please set CUDA_NVCC / CUDA_HOME / CUDA_LIB_DIR / TIGRE_CUDA_ARCH_FLAGS.")
         rethrow(err)
     end
 
-    info_path = write_build_info(cmd, nvcc, cuda, include_dir, lib_dir, sources, upstream.source, upstream.ref)
+    verify_linked_library!(nm_bin, OUT_LIB)
+
+    info_path = write_build_info(compile_cmds, link_cmd, nvcc, cuda, include_dir, lib_dir, sources, upstream.source, upstream.ref)
     println("Built ", OUT_LIB)
     println("Build info written to ", info_path)
     return OUT_LIB

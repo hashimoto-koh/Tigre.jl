@@ -6,11 +6,11 @@ This page explains how to install, build, and verify `Tigre.jl`.
 
 ## System Requirements
 
-- **Operating System**: Linux (x86_64 or aarch64).
+- **Operating System**: Linux (x86_64 or aarch64). Windows and macOS native CUDA builds are not supported.
 - **Julia**: Version 1.11 or later.
 - **NVIDIA GPU**: CUDA-capable GPU (Compute Capability $\ge 5.0$, Maxwell or newer).
 - **CUDA Toolkit**: CUDA 11.0 or newer (providing `nvcc` and `libcudart.so`).
-- **Build Tools**: `git`, standard C++ toolchain (`g++` / `clang++` compatible with nvcc).
+- **Build Tools**: `git`, standard C++ toolchain (`g++` compatible with `nvcc`), and GNU binutils (`objcopy`, `nm`).
 
 ---
 
@@ -93,6 +93,8 @@ You can customize compilation and device detection using the following environme
 | `CUDA_HOME` / `CUDA_PATH` | Path to CUDA installation root directory | `/usr/local/cuda` |
 | `CUDA_NVCC` | Explicit path to the `nvcc` compiler binary | `$(CUDA_HOME)/bin/nvcc` or `which nvcc` |
 | `CUDA_LIB_DIR` | Directory containing `libcudart.so` | `$(CUDA_HOME)/lib64` |
+| `TIGRE_OBJCOPY` | Explicit path to GNU `objcopy` binary | `which objcopy` |
+| `TIGRE_NM` | Explicit path to GNU `nm` binary | `which nm` |
 | `TIGRE_CUDA_ARCH_FLAGS` | Custom GPU architecture flags for nvcc | Detected automatically via `nvcc --list-gpu-arch` |
 | `TIGRE_BUILD_FORCE` | Force re-compilation even if output is fresh | `0` |
 | `TIGREJL_UPSTREAM_SOURCE` | Upstream Git repository URL | `https://github.com/CERN/TIGRE.git` |
@@ -103,5 +105,6 @@ You can customize compilation and device detection using the following environme
 ## Troubleshooting
 
 - **`nvcc not found`**: Ensure CUDA bin directory (e.g. `/usr/local/cuda/bin`) is in your system `PATH`, or set `CUDA_HOME=/usr/local/cuda`.
-- **`stale build reported`**: Run with `TIGRE_BUILD_FORCE=1 julia --project=. deps/build.jl` to refresh the build artifacts.
+- **`objcopy not found` / `nm not found`**: Install GNU binutils on Linux and ensure `objcopy` and `nm` are in `PATH`, or configure `TIGRE_OBJCOPY` and `TIGRE_NM`.
+- **`stale build reported` / `recorded build scheme differs`**: Upgrading from an older build requires rebuilding under the `per-tu-localize-v1` scheme via `Pkg.build("Tigre")` or `TIGRE_BUILD_FORCE=1 julia --startup-file=no --project=. deps/build.jl`.
 - **Multiple GPUs**: Specify the target GPU ID (0-indexed) via `gpu_ids = [0]` in operator or algorithm calls.

@@ -84,14 +84,15 @@ Because the memory buffers match the physical axis ordering expected by TIGRE's 
 
 Building `Tigre.jl` requires an NVIDIA GPU and native compilation tools:
 
+- **Operating System**: Linux (x86_64 / aarch64). Windows and macOS native CUDA builds are not supported.
 - **NVIDIA GPU**: CUDA-capable GPU (Compute Capability 3.5 or higher recommended).
 - **NVIDIA Driver**: Driver version compatible with your installed CUDA Toolkit.
 - **NVIDIA CUDA Toolkit**: `nvcc` compiler must be accessible in your `PATH` (or specified via `CUDA_NVCC` / `CUDA_HOME`).
-- **C++ Host Compiler**: A compatible C++ host compiler (e.g. `g++` on Linux, `MSVC` on Windows, or `clang++`).
+- **C++ Host Compiler & GNU Binutils**: A compatible C++ host compiler (`g++` on Linux) and GNU binutils (`objcopy`, `nm`) for per-translation-unit symbol isolation (override paths with `TIGRE_OBJCOPY` / `TIGRE_NM` if needed).
 - **Git**: Required by `Pkg.build` to clone the pinned upstream TIGRE repository sources.
 
 > [!IMPORTANT]
-> Because `Tigre.jl` builds the native CUDA C++ kernels (`libtigre_julia`) directly on your machine via `deps/build.jl`, `nvcc` and the NVIDIA CUDA Toolkit must be installed before running `Pkg.build("Tigre")`.
+> Because `Tigre.jl` builds the native CUDA C++ kernels (`libtigre_julia`) directly on your machine via `deps/build.jl`, `nvcc`, GNU binutils (`objcopy`, `nm`), and the NVIDIA CUDA Toolkit must be installed before running `Pkg.build("Tigre")`.
 
 ### Standard Build
 
@@ -101,13 +102,16 @@ Clone the repository and build the native C/CUDA shared library:
 julia --startup-file=no --project=. -e 'import Pkg; Pkg.develop(path=pwd()); Pkg.build("Tigre")'
 ```
 
+> [!NOTE]
+> **Upgrading from an older build**: If you have an existing `libtigre_julia.so` built before `per-tu-localize-v1` (without `build_scheme` recorded in `deps/usr/build-info.toml`), `library_status()` will report `stale = true` (`"recorded build scheme differs"`) and `Pkg.test()` will fail until you rebuild via `Pkg.build("Tigre")` or `julia --startup-file=no --project=. deps/build.jl`.
+
 ### Build Mechanics
 
 Running `Pkg.build("Tigre")` automatically:
 1. Reads `deps/upstream.toml` for the upstream repository URL and pinned Git commit (`a7d84b510bfc280ec9df7dc0954f294f389957b9`, TIGRE `v3.2.0`).
 2. Clones/fetches upstream `CERN/TIGRE` into `deps/src/TIGRE` (if not already cached).
 3. Applies Julia wrapper shims and minimal overlays from `deps/wrapper/`.
-4. Compiles `deps/usr/lib/libtigre_julia.$(Libdl.dlext)` with `nvcc`.
+4. Compiles each C++/CUDA translation unit into `deps/usr/obj/`, localizes non-exported CUDA internal symbols via `nm` and `objcopy` (`per-tu-localize-v1`), and links `deps/usr/lib/libtigre_julia.$(Libdl.dlext)` with `-Xlinker=-z,defs`.
 5. Writes build metadata to `deps/usr/build-info.toml`.
 
 ### Build Environment Variables
@@ -118,12 +122,14 @@ Running `Pkg.build("Tigre")` automatically:
 | `CUDA_HOME` / `CUDA_PATH` | Path to CUDA installation root directory |
 | `CUDA_INCLUDE_DIR` | Path to CUDA headers |
 | `CUDA_LIB_DIR` | Path to CUDA libraries (`libcudart`, etc.) |
+| `TIGRE_OBJCOPY` | Path to custom `objcopy` binary (default: `which objcopy`) |
+| `TIGRE_NM` | Path to custom `nm` binary (default: `which nm`) |
 | `TIGRE_CUDA_ARCH_FLAGS` | Specific CUDA compute architecture flags (e.g. `-arch=sm_80`) |
 | `TIGRE_EXTRA_NVCC_FLAGS` | Additional compilation flags passed to `nvcc` |
 | `TIGRE_BUILD_FORCE=1` | Force clean recompile of native library |
 | `TIGRE_BUILD_FETCH_FORCE=1` | Force re-fetching upstream source code |
 | `TIGRE_BUILD_VERIFY_ONLY=1` | Only inspect staleness without compiling |
-| `TIGRE_BUILD_DRY_RUN=1` | Print `nvcc` compilation commands without running them |
+| `TIGRE_BUILD_DRY_RUN=1` | Print build plan and `nvcc` link command without compiling |
 
 ### Build Status Inspection
 
@@ -290,10 +296,10 @@ Pre-allocated workspace paths (`prepare_first_order_workspace`, `prepare_art_pla
 
 ## Repository Hygiene
 
-- **Tracked in Git**: `src/`, `test/`, `demos/`, `docs/`, `examples/`, `benchmark/`, `deps/build.jl`, `deps/upstream.toml`, `deps/wrapper/`, `Project.toml`, `README.md`, `doctor.jl`.
+- **Tracked in Git**: `src/`, `test/`, `demos/`, `docs/`, `examples/`, `benchmark/`, `deps/native_config.jl`, `deps/build.jl`, `deps/upstream.toml`, `deps/wrapper/`, `Project.toml`, `README.md`, `doctor.jl`.
 - **Ignored / Ephemeral**:
   - `deps/src/` (cloned upstream TIGRE repository)
-  - `deps/usr/` (compiled shared libraries and `build-info.toml`)
+  - `deps/usr/` (compiled shared libraries, intermediate objects in `deps/usr/obj/`, and `build-info.toml`)
   - `docs/build/` (generated documentation site)
   - `deps/build.log` (local build logs)
 

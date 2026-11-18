@@ -8,32 +8,8 @@ const WRAPPER_DIR = joinpath(DEPS_DIR, "wrapper")
 const WRAPPER_SRC_DIR = joinpath(WRAPPER_DIR, "src")
 const WRAPPER_OVERLAY_DIR = joinpath(WRAPPER_DIR, "overlay")
 const UPSTREAM_CONFIG = joinpath(DEPS_DIR, "upstream.toml")
-const UPSTREAM_SOURCE_NAMES = [
-    "projection.cpp",
-    "TIGRE_common.cpp",
-    "GpuIds.cpp",
-    "gpuUtils.cu",
-    "Siddon_projection.cu",
-    "Siddon_projection_parallel.cu",
-    "ray_interpolated_projection.cu",
-    "ray_interpolated_projection_parallel.cu",
-    "voxel_backprojection.cu",
-    "voxel_backprojection2.cu",
-    "voxel_backprojection_parallel.cu",
-    "GD_TV.cu",
-    "GD_AwTV.cu",
-    "tv_proximal.cu",
-    "PICCS.cu",
-]
-const WRAPPER_SOURCE_NAMES = [
-    "tigre_julia_runtime.cpp",
-    "tigre_julia_shim.cpp",
-]
-const OVERLAY_SOURCE_NAMES = [
-    "TIGRE_common.hpp",
-    "TIGRE_common.cpp",
-]
-const PATCH_NAMES = String[]
+include_dependency(joinpath(DEPS_DIR, "native_config.jl"))
+include(joinpath(DEPS_DIR, "native_config.jl"))
 const _NATIVE_HANDLE = Ref{Ptr{Cvoid}}(C_NULL)
 
 struct CGeometry
@@ -140,16 +116,10 @@ function _realpath_if_exists(path::AbstractString)
     return normpath(path)
 end
 
-"""
-    native_build_stale_reasons() -> Vector{String}
-
-Evaluate whether the native library needs rebuilding and return a list of reasons (e.g. missing files, newer source timestamps).
-"""
-function native_build_stale_reasons()
+function _native_build_stale_reasons_for(info::Union{Dict{String, Any}, Nothing})
     reasons = String[]
     libpath = native_library_path()
     isfile(libpath) || push!(reasons, "output library is missing")
-    info = native_build_info()
     info === nothing && push!(reasons, "build-info.toml is missing")
 
     sources = native_build_sources()
@@ -158,6 +128,7 @@ function native_build_stale_reasons()
     end
 
     if info !== nothing
+        get(info, "build_scheme", "") == NATIVE_BUILD_SCHEME || push!(reasons, "recorded build scheme differs")
         # Compare source lists using basename sets after resolving symlinks
         # to prevent false-positive stale detection (e.g. /home/jov/hst/git/... vs /home/jov/git/...).
         recorded_raw = get(info, "sources", String[])
@@ -181,6 +152,13 @@ function native_build_stale_reasons()
 
     return unique(reasons)
 end
+
+"""
+    native_build_stale_reasons() -> Vector{String}
+
+Evaluate whether the native library needs rebuilding and return a list of reasons (e.g. missing files, newer source timestamps).
+"""
+native_build_stale_reasons() = _native_build_stale_reasons_for(native_build_info())
 
 """
     native_build_stale() -> Bool
@@ -215,7 +193,7 @@ library_status() = (;
 Trigger native library compilation via `deps/build.jl`.
 """
 function build_native()
-    return include(joinpath(ROOT_DIR, "deps", "build.jl"))
+    return Base.include(Module(:TigreBuild), joinpath(ROOT_DIR, "deps", "build.jl"))
 end
 
 _mode_code(geo::Geometry) = geo.mode === :parallel ? Cint(1) : Cint(0)
